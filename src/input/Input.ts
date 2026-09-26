@@ -64,6 +64,10 @@ export class Input {
   invertY = false;
   /** Whether the current top context wants the pointer locked. */
   private wantsLock = false;
+  /** Set when we release the lock ourselves, so the async pointerlockchange isn't mistaken for Esc. */
+  private expectUnlock = false;
+  /** Called when the pointer lock is lost unexpectedly (e.g. the player pressed Esc). */
+  onUnexpectedUnlock: (() => void) | null = null;
   readonly scope = new Scope('input');
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -107,6 +111,14 @@ export class Input {
     s.listen(window, 'contextmenu', (e) => e.preventDefault());
     s.listen(this.canvas, 'click', () => {
       if (this.wantsLock && document.pointerLockElement !== this.canvas) this.requestLock();
+    });
+    s.listen(document, 'pointerlockchange', () => {
+      if (document.pointerLockElement === this.canvas) return;
+      if (this.expectUnlock) {
+        this.expectUnlock = false;
+        return;
+      }
+      if (this.wantsLock && (this.context === 'gameplay' || this.context === 'flight')) this.onUnexpectedUnlock?.();
     });
   }
 
@@ -162,7 +174,10 @@ export class Input {
   }
 
   releaseLock(): void {
-    if (document.pointerLockElement) document.exitPointerLock();
+    if (document.pointerLockElement) {
+      this.expectUnlock = true;
+      document.exitPointerLock();
+    }
   }
 
   get locked(): boolean {

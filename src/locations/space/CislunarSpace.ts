@@ -135,14 +135,19 @@ export class CislunarSpace extends Location {
     const s = game.store.state;
     // Spawn resolution for flight: launch → point toward Harbor; undock → back off the port.
     const spawn = s.player.spawnId;
-    if (spawn === 'launch') {
+    const docked = s.ship.parking.kind === 'docked';
+    if (spawn === 'launch' && !s.flags['orbit.placed']) {
+      // First arrival after the ascent: point the nose at Harbor. Later loads keep the saved position.
+      game.store.setFlag('orbit.placed', true);
       this.flight.position.set(0, 0, 0);
       this.lookAtTarget(HARBOR_POS);
-    } else if (spawn === 'undock') {
+    } else if (docked || spawn === 'undock') {
       this.flight.position.copy(this.spawns.undock.position);
       this.lookAtTarget(HARBOR_POS.clone().add(new THREE.Vector3(0, 0, 3000)));
       this.flight.velocity.set(0, 0, 0);
+      if (docked) game.store.setFlag('harbor.undocked', true);
     }
+    this.persistParking();
     game.renderer.setBackground(this.bgScene, this.bgCam);
     this.scope.add(() => game.renderer.setBackground(null, null));
     game.cam.camera.far = 120000;
@@ -472,8 +477,8 @@ export class CislunarSpace extends Location {
     const cam = this.game.cam.camera;
     const out: typeof ui.markers.value = [];
     this.targets.forEach((t, i) => {
-      if (t.id.startsWith('canister') && !this.salvage.find((s) => s.id === t.id)?.mesh.visible) return;
       const p = t.position();
+      if (t.id.startsWith('canister') && (!this.salvage.find((s) => s.id === t.id)?.mesh.visible || (p.distanceTo(this.flight.position) > 3000 && i !== this.targetIdx))) return;
       const v = p.clone().project(cam);
       const behind = v.z > 1;
       const d = p.distanceTo(this.flight.position);
@@ -497,6 +502,7 @@ export class CislunarSpace extends Location {
     const dock = this.harborDock().distanceTo(f.position);
     const altM = ORIGIN_ALT_KM * 1000 + f.position.y;
     return {
+      view: this.view,
       speed: f.speed,
       throttle: Math.max(0, f.throttle),
       assist: f.assist,

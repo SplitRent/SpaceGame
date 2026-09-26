@@ -10,6 +10,7 @@ const game = new Game();
 const q = new URLSearchParams(location.search).get('quality');
 if (q === 'low' || q === 'medium' || q === 'high') game.settings.quality = q;
 setGame(game);
+(window as any).__ui = ui;
 render(h(App, {}), document.getElementById('ui')!);
 
 game.boot(canvas).then(async () => {

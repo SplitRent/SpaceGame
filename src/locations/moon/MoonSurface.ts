@@ -342,12 +342,14 @@ export class MoonSurface extends Location {
   private buildShip(): void {
     const st = this.game.store.state;
     const hullFixed = !!st.ship.systems['prop.main']?.steps['hull'] || !!st.flags.launched;
-    this.ship = buildLantern({ damaged: !hullFixed, power: 0, landed: true });
+    const leveled = st.ship.listDeg <= 0.01;
+    this.ship = buildLantern({ damaged: !hullFixed, power: 0, landed: true, portStrutExtension: leveled ? 2.9 : 0 });
     this.shipRoot.add(this.ship.group);
     const baseY = this.hf.heightAt(SHIP_POS.x, SHIP_POS.y);
     const roll = THREE.MathUtils.degToRad(st.ship.listDeg);
     // Leveled ship stands on extended struts; crashed ship lies in its bed.
-    this.shipRoot.position.set(SHIP_POS.x, baseY - (roll > 0 ? 1.3 : -0.2) + (roll > 0 ? 0 : 30 * Math.tan(SHIP_ROLL) * 0.5), SHIP_POS.y);
+    // The bed is tilted toward port; a levelled ship stands on its starboard feet with extended port struts.
+    this.shipRoot.position.set(SHIP_POS.x, roll > 0 ? baseY - 1.3 : baseY + 12 * Math.tan(SHIP_ROLL) - 0.2, SHIP_POS.y);
     this.shipRoot.rotation.set(roll > 0 ? 0.012 : 0, 0, roll);
     this.scene.add(this.shipRoot);
     this.scope.add(() => this.ship.dispose());
@@ -1108,6 +1110,73 @@ export class MoonSurface extends Location {
         });
       }
     }
+  }
+
+  /* ------------------------------ Survey map ------------------------------ */
+
+  private mapUrl: string | null = null;
+  private readonly mapHalf = 950;
+
+  mapTransform = (x: number, z: number): [number, number] => [(x + this.mapHalf) / (this.mapHalf * 2), (z + this.mapHalf) / (this.mapHalf * 2)];
+
+  /** Hillshaded relief map generated from the real heightfield (cached). */
+  renderMap(): string {
+    if (this.mapUrl) return this.mapUrl;
+    const N = 384;
+    const c = document.createElement('canvas');
+    c.width = c.height = N;
+    const ctx = c.getContext('2d')!;
+    const img = ctx.createImageData(N, N);
+    const light = new THREE.Vector3(-0.6, 0.55, -0.5).normalize();
+    const n = new THREE.Vector3();
+    for (let j = 0; j < N; j++)
+      for (let i = 0; i < N; i++) {
+        const x = -this.mapHalf + (i / N) * this.mapHalf * 2;
+        const z = -this.mapHalf + (j / N) * this.mapHalf * 2;
+        this.hf.normalAt(x, z, n);
+        const shade = Math.max(0, n.dot(light));
+        const h = this.hf.heightAt(x, z);
+        const tone = 40 + shade * 150 + Math.max(-30, Math.min(30, h * 0.12));
+        const k = (j * N + i) * 4;
+        img.data[k] = tone * 0.92;
+        img.data[k + 1] = tone * 0.97;
+        img.data[k + 2] = tone * 1.05;
+        img.data[k + 3] = 255;
+      }
+    ctx.putImageData(img, 0, 0);
+    // survey grid
+    ctx.strokeStyle = 'rgba(143,227,255,0.12)';
+    for (let g = 0; g <= N; g += N / 8) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, N);
+      ctx.moveTo(0, g);
+      ctx.lineTo(N, g);
+      ctx.stroke();
+    }
+    this.mapUrl = c.toDataURL();
+    return this.mapUrl;
+  }
+
+  mapMarkers(): { x: number; y: number; label: string; color: string }[] {
+    const s = this.game.store.state;
+    const out: { x: number; y: number; label: string; color: string }[] = [];
+    const add = (x: number, z: number, label: string, color: string) => {
+      const [u, v] = this.mapTransform(x, z);
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1) out.push({ x: u, y: v, label, color });
+    };
+    if (s.ship.parking.kind === 'surface') add(SHIP_POS.x, SHIP_POS.y, 'EXV Lantern', '#ffb347');
+    if (Object.values(s.base.pads).some((p) => p.built)) add(BASE_CENTER.x, BASE_CENTER.y, 'Base camp', '#3ee08f');
+    for (const z of ZONES) if (s.universe.discovered[z.id] && z.id !== 'moon.crashsite') add(z.center.x, z.center.y, z.name, '#9fe8ff');
+    for (const d of s.world[this.id]?.dynamic ?? []) if (d.kind === 'cache') add(d.position[0], d.position[2], 'Your dropped gear', '#ff6464');
+    // Navigation assist: objective markers for undiscovered destinations
+    if (this.game.settings.navAssist === 'markers') {
+      const q = (id: string) => this.game.store.check({ questActive: id });
+      if (q('mq.ice') && !s.universe.discovered['moon.shadowcrater']) add(SHADOW_CRATER.x, SHADOW_CRATER.z, '▶ Shadow Crater', '#ffb347');
+      if (q('mq.earthrise') && !s.universe.discovered['moon.summit']) add(SUMMIT.x, SUMMIT.y, '▶ Earthrise Summit', '#ffb347');
+      if (q('mq.kepler') && !s.universe.discovered['moon.kepler9']) add(K9.x, K9.y, '▶ Kepler-9', '#ffb347');
+    }
+    return out;
   }
 
   override temperatureAt(pos: THREE.Vector3): number {

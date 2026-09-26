@@ -45,7 +45,7 @@ export const QUESTS: QuestDef[] = [
     stages: [
       {
         id: 'wake', journal: 'I woke in the medbay. The Lantern is dark, silent, and lying at an angle.',
-        objectives: [{ id: 'find', text: 'Find the rest of the crew', done: { flag: 'met.castellanos' } }],
+        objectives: [{ id: 'find', text: 'Find the crew — Mira is down in engineering (Deck 3, aft)', done: { flag: 'met.castellanos' } }],
         next: 'power',
       },
       {

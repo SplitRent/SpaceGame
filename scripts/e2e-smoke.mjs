@@ -102,8 +102,14 @@ const a = JSON.parse(saved.snap), b = JSON.parse(after);
 ok(JSON.stringify(a.quests) === JSON.stringify(b.quests) && JSON.stringify(a.inventories) === JSON.stringify(b.inventories) && JSON.stringify(a.ship) === JSON.stringify(b.ship), 'load restores quests, inventories and ship exactly');
 
 // Transition stress: airlock in/out repeatedly, check listeners & GPU resources don't grow
+// Warm-up cycle (caches, shared geometry), then measure steady state.
+await g(() => window.__game.locations.travel({ location: 'moon.south', spawn: 'airlock' }));
+await idle();
+await g(() => window.__game.locations.travel({ location: 'lantern.interior', spawn: 'airlock' }));
+await idle();
+await page.waitForTimeout(2000);
 const before = await g(() => ({ l: window.__game.store.events.listenerCount(), geo: window.__game.renderer.gl.info.memory.geometries }));
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < 3; i++) {
   await g(() => window.__game.locations.travel({ location: 'moon.south', spawn: 'airlock' }));
   await idle();
   await g(() => window.__game.locations.travel({ location: 'lantern.interior', spawn: 'airlock' }));
@@ -112,7 +118,7 @@ for (let i = 0; i < 4; i++) {
 await page.waitForTimeout(2000);
 const afterT = await g(() => ({ l: window.__game.store.events.listenerCount(), geo: window.__game.renderer.gl.info.memory.geometries }));
 ok(afterT.l === before.l, `event listeners stable across transitions (${before.l} → ${afterT.l})`);
-ok(afterT.geo <= before.geo * 1.3 + 30, `GPU geometries bounded across transitions (${before.geo} → ${afterT.geo})`);
+ok(afterT.geo <= before.geo + 5, `GPU geometries stable across transitions (${before.geo} → ${afterT.geo})`);
 // Double travel request is rejected
 const dbl = await g(async () => {
   const game = window.__game;

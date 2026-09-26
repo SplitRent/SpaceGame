@@ -110,12 +110,10 @@ export class Game {
     this.scope.listen(window, 'resize', () => this.renderer.resize());
     this.scope.listen(window, 'pointerdown', () => this.audio.unlock());
     this.scope.listen(window, 'keydown', () => this.audio.unlock());
-    this.scope.listen(document, 'pointerlockchange', () => {
-      // Losing pointer lock during gameplay (e.g. Esc) opens the pause menu.
-      if (!this.input.locked && this.inGame && !this.paused && (this.input.context === 'gameplay' || this.input.context === 'flight')) {
-        this.openOverlay('pause');
-      }
-    });
+    // Losing pointer lock unexpectedly during gameplay (e.g. Esc) opens the pause menu.
+    this.input.onUnexpectedUnlock = () => {
+      if (this.inGame && !this.paused && !this.locations.busy && !this.story.cinematicActive) this.openOverlay('pause');
+    };
     await initPhysics();
     this.player.onFootstep = () => this.audio.play(this.currentLocation?.env.ambience.startsWith('ship') || this.currentLocation?.env.ambience === 'station' ? 'stepMetal' : 'step', 0.8);
     this.suit.onDamage = () => {
@@ -283,10 +281,56 @@ export class Game {
       this.input.setBase('cinematic');
     }
     this.cam.snap();
+    if (loc.mode === 'foot') this.spawnDynamicObjects(loc);
     loc.onEnter();
     this.store.markChanged('locationEntered');
     ui.title.value = null;
     if (entry && loc.mode !== 'cinematic') this.showLocationTitle(entry.name);
+  }
+
+  /** Death caches (and future dropped items) are persistent per location. */
+  private spawnDynamicObjects(loc: Location): void {
+    const ls = this.store.state.world[loc.id];
+    if (!ls) return;
+    for (const d of ls.dynamic) {
+      if (d.kind !== 'cache') continue;
+      const g = new THREE.Group();
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.5), new THREE.MeshStandardMaterial({ color: '#d9dde2', roughness: 0.5 }));
+      box.position.y = 0.23;
+      const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 6), new THREE.MeshStandardMaterial({ color: '#300', emissive: '#ff3b30', emissiveIntensity: 3 }));
+      beacon.position.y = 0.95;
+      const light = new THREE.PointLight('#ff3b30', 25, 12, 1.6);
+      light.position.y = 1.6;
+      g.add(box, beacon, light);
+      g.position.set(...d.position);
+      loc.scene.add(g);
+      const uid = d.uid;
+      const it = {
+        id: `cache:${uid}`,
+        object: g,
+        kind: 'pickup' as const,
+        prompt: () => 'Recover your dropped gear',
+        interact: () => {
+          const cur = this.store.state.world[loc.id]?.dynamic.find((x) => x.uid === uid);
+          if (!cur) return;
+          this.store.batch('recover', () => {
+            for (const st of cur.items) {
+              const added = this.store.give(st.itemId, st.qty);
+              st.qty -= added;
+            }
+            cur.items = cur.items.filter((x) => x.qty > 0);
+            if (!cur.items.length) {
+              ls.dynamic = ls.dynamic.filter((x) => x.uid !== uid);
+              g.visible = false;
+              loc.removeInteractable(it);
+            }
+            this.store.markChanged('recover');
+          });
+          if (cur.items.length) pushNotification('Pack full — some gear left in the cache', 'warn');
+        },
+      };
+      loc.registerInteractable(it);
+    }
   }
 
   showLocationTitle(name: string, sub = ''): void {
@@ -510,6 +554,9 @@ export class Game {
       return false;
     }
     this.audio.play('confirm');
+    // Structural repairs restore hull integrity.
+    if (systemId === 'life.hull') store.state.ship.hull = Math.min(1, store.state.ship.hull + 0.15);
+    if (systemId === 'prop.main' && stepId === 'hull') store.state.ship.hull = Math.max(store.state.ship.hull, 0.92);
     if (autoOnline) this.bringOnline(autoOnline);
     return true;
   }
@@ -557,12 +604,15 @@ export class Game {
     const dropped = inv.stacks.filter((st) => CONTENT.items[st.itemId]?.category !== 'quest');
     if (dropped.length && this.currentLocation?.mode === 'foot') {
       const locState = this.store.locationState(this.currentLocation.id);
-      locState.dynamic = locState.dynamic.filter((d) => d.kind !== 'cache'); // one cache per location
+      // Never destroy earlier drops: merge into an existing cache in this location, moved to the new spot.
+      const existing = locState.dynamic.find((d) => d.kind === 'cache');
+      const items = [...(existing?.items ?? []), ...dropped.map((d) => ({ ...d }))];
+      locState.dynamic = locState.dynamic.filter((d) => d !== existing);
       locState.dynamic.push({
         uid: this.store.nextUid('cache'),
         kind: 'cache',
         position: [this.player.position.x, this.player.position.y, this.player.position.z],
-        items: dropped.map((d) => ({ ...d })),
+        items,
       });
       inv.stacks = inv.stacks.filter((st) => CONTENT.items[st.itemId]?.category === 'quest');
       this.store.markChanged('death-drop');
@@ -731,7 +781,7 @@ export class Game {
       locationName: loc ? LOCATION_REGISTRY[loc.id]?.name ?? loc.name : '',
       objective: q?.objective ?? null,
       questTitle: q?.title ?? null,
-      view: this.cam.effectiveView,
+      view: ((loc as any)?.flightHud?.()?.view as string | undefined) ?? this.cam.effectiveView,
       tool: this.tools.label,
       compass: this.player.yaw,
       timeOfDay: (loc as any)?.timeOfDayLabel?.() ?? null,

@@ -44,6 +44,7 @@ export interface HudData {
 }
 
 export interface FlightHud {
+  view: string;
   speed: number;
   throttle: number;
   assist: boolean;

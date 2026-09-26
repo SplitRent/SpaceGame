@@ -15,6 +15,8 @@ export interface LanternOptions {
   /** 0..1 power level controls window/beacon glow. */
   power: number;
   landed: boolean;
+  /** Extra length (m) on the port struts when levelling on sloped ground. */
+  portStrutExtension?: number;
 }
 
 interface Section {
@@ -214,7 +216,8 @@ export function buildLantern(opts: LanternOptions): LanternModel {
         continue;
       }
       const top = new THREE.Vector3(side * 8, 3.5, z);
-      const foot = new THREE.Vector3(side * 12, opts.landed ? 0.2 : 3, z);
+      const ext = side === -1 ? opts.portStrutExtension ?? 0 : 0;
+      const foot = new THREE.Vector3(side * 12, opts.landed ? 0.2 - ext : 3, z);
       const mid = top.clone().add(foot).multiplyScalar(0.5);
       const len = top.distanceTo(foot);
       const ang = Math.atan2(foot.x - top.x, top.y - foot.y);

@@ -66,15 +66,44 @@ uniform float uTime;
 uniform float uSeed;
 uniform sampler2D uMap;
 uniform float uHasMap;
+uniform float uRadius;
 varying vec3 vWorldNormal;
 varying vec3 vObjPos;
 varying vec2 vUv;
 varying vec3 vWorldPos;
 ${NOISE3}
+float hash13(vec3 p){ p = fract(p*0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+// Crater height field: bowls with raised rims from a 3D cell lattice (Worley-style).
+float craterField(vec3 p, float scale){
+  vec3 q = p * scale;
+  vec3 ip = floor(q);
+  float h = 0.0;
+  for (int x = -1; x <= 1; x++)
+  for (int y = -1; y <= 1; y++)
+  for (int z = -1; z <= 1; z++) {
+    vec3 c = ip + vec3(float(x), float(y), float(z));
+    float rnd = hash13(c);
+    if (rnd < 0.45) continue;
+    vec3 ctr = c + vec3(hash13(c + 7.1), hash13(c + 3.7), hash13(c + 1.3));
+    float r = 0.18 + 0.32 * hash13(c + 9.2);
+    float d = length(q - ctr) / r;
+    if (d < 1.0) h += (d * d - 1.0) * 0.8;
+    else if (d < 1.6) h += 0.25 * (1.0 - (d - 1.0) / 0.6);
+  }
+  return h;
+}
 float crater(vec3 p, float scale){
-  // Pseudo-craters from cellular-like noise ridges
   float n = abs(snoise(p*scale));
   return smoothstep(0.0, 0.25, n);
+}
+// Bump mapping without tangents (Mikkelsen): perturb N using screen-space height derivatives.
+vec3 bumpNormal(vec3 N, vec3 pos, float h, float strength){
+  vec3 dpx = dFdx(pos), dpy = dFdy(pos);
+  float hx = dFdx(h), hy = dFdy(h);
+  vec3 r1 = cross(dpy, N), r2 = cross(N, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (hx * r1 + hy * r2);
+  return normalize(abs(det) * N - strength * grad);
 }
 void main(){
   vec3 N = normalize(vWorldNormal);
@@ -113,6 +142,10 @@ void main(){
     col *= 0.78 + 0.14*c1 + 0.08*c2;
     float rays = smoothstep(0.75, 0.95, snoise(p*3.0)) * 0.25;
     col = mix(col, uColC, rays);
+    // Relief: large and small craters plus rolling highlands, as a bump-mapped height.
+    float hgt = craterField(p, 14.0) * 0.6 + craterField(p, 55.0) * 0.25 + craterField(p, 180.0) * 0.08 + fbm3(p * 30.0) * 0.15;
+    N = bumpNormal(N, vWorldPos, hgt, uRadius * 0.012);
+    ndl = dot(N, L);
     col *= 0.9 + 0.2*snoise(p*60.0);
     terminatorSoft = 0.02;
   } else if (uKind == 3) { // mars
@@ -306,6 +339,7 @@ export function createPlanet(kind: PlanetKind, radius: number, opts: { segments?
     uSeed: { value: kind === 'jupiter' ? 1 : kind === 'saturn' ? 0.2 : (kind.length * 0.37) % 1 },
     uMap: { value: kind === 'earth' ? earthTexture() : null },
     uHasMap: { value: kind === 'earth' ? 1 : 0 },
+    uRadius: { value: radius },
   };
   const mat = new THREE.ShaderMaterial({ vertexShader: SURFACE_VERT, fragmentShader: SURFACE_FRAG, uniforms });
   const surface = new THREE.Mesh(geo, mat);
