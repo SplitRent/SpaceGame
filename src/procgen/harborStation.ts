@@ -111,7 +111,7 @@ export function buildHarbor(): HarborModel {
     setBeacon(on: boolean, t: number) {
       const blink = on && Math.sin(t * 3) > 0.6 ? 1 : 0;
       mats.beacon.emissiveIntensity = blink * 6;
-      beaconLight.intensity = blink * 4000;
+      beaconLight.intensity = blink * 600;
       mats.dockLight.emissiveIntensity = on ? 1.5 + Math.sin(t * 4) : 0;
       mats.window.emissiveIntensity = on ? 0.35 : 0.05;
     },

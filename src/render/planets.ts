@@ -144,7 +144,7 @@ void main(){
     col = mix(col, uColC, rays);
     // Relief: large and small craters plus rolling highlands, as a bump-mapped height.
     float hgt = craterField(p, 14.0) * 0.6 + craterField(p, 55.0) * 0.25 + craterField(p, 180.0) * 0.08 + fbm3(p * 30.0) * 0.15;
-    N = bumpNormal(N, vWorldPos, hgt, uRadius * 0.012);
+    N = bumpNormal(N, vWorldPos, hgt, uRadius * 0.007);
     ndl = dot(N, L);
     col *= 0.9 + 0.2*snoise(p*60.0);
     terminatorSoft = 0.02;

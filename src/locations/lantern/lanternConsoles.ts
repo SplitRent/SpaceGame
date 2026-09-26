@@ -659,14 +659,10 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
   // Suit lockers: refill + recovery point
   simple('suit.locker', hotspot(7.2, 1.2, -15, 0.7, 2.2, 2.6), () => 'Suit locker — recharge suit', () => {
     const p = st().player;
-    const canO2 = !crashed() || online('life.support') || online('power.batteries');
-    if (!canO2) {
-      pushNotification('Ship O₂ reserve is offline. Restore battery power first.', 'warn');
-      game.audio.play('error');
-      return;
-    }
+    // The suit room's high-pressure O₂ bottles need no power; recharging suit batteries does.
     p.oxygen = p.oxygenMax;
-    p.suitPower = p.suitPowerMax;
+    if (!lowPower()) p.suitPower = p.suitPowerMax;
+    else pushNotification('Oxygen topped up from the emergency bottles. Suit batteries need ship power to recharge.', 'info');
     p.respawn = { locationId: loc.id, spawnId: 'medbay' };
     store.markChanged('suit');
     game.audio.play('airlock', 0.4);

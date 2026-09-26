@@ -156,11 +156,10 @@ export class Input {
 
   private updateLock(): void {
     const ctx = this.context;
-    this.wantsLock = ctx === 'gameplay' || ctx === 'flight' || ctx === 'panel';
-    if (this.wantsLock) {
-      if (ctx !== 'panel') this.requestLock();
-      else this.releaseLock();
-    } else this.releaseLock();
+    // Panels use a free cursor to click physical controls; gameplay/flight capture the mouse.
+    this.wantsLock = ctx === 'gameplay' || ctx === 'flight';
+    if (this.wantsLock) this.requestLock();
+    else this.releaseLock();
   }
 
   requestLock(): void {

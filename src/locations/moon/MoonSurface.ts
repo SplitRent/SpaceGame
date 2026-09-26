@@ -31,6 +31,7 @@ const SCAR: Crater = { x: 58, z: 42, r: 11, depth: 3.5, rim: 1.3, age: 0 };
 const HARBOR_DEBRIS = new THREE.Vector2(-260, -140);
 const SUMMIT = new THREE.Vector2(-640, -560);
 const K9 = new THREE.Vector2(430, -430);
+const EARTH_AZ = Math.atan2(EARTH_DIR.z, EARTH_DIR.x);
 
 export const PADS: Record<string, THREE.Vector2> = {
   'pad.a': new THREE.Vector2(-16, -12),
@@ -91,6 +92,8 @@ export class MoonSurface extends Location {
   private relay!: THREE.Group;
   private zoneTimer = 0;
   private sunDir = new THREE.Vector3();
+  /** Actual highest point of Earthrise Summit (computed from the terrain). */
+  private peak = new THREE.Vector2();
 
   constructor(game: Game) {
     super(game, 1.62);
@@ -121,7 +124,11 @@ export class MoonSurface extends Location {
       {
         apply: (x, z, h) => {
           const r = Math.hypot(x, z);
-          return h + smoothstep(760, 1150, r) * 290 + smoothstep(1150, 2600, r) * 120;
+          // A low saddle in the rim toward Earth: only from the summit massif does Earth clear the horizon.
+          let d = Math.atan2(z, x) - EARTH_AZ;
+          d = Math.atan2(Math.sin(d), Math.cos(d));
+          const notch = 1 - 0.88 * Math.exp(-(d * d) / (2 * 0.24 * 0.24)) * smoothstep(600, 800, r);
+          return h + (smoothstep(760, 1150, r) * 290 + smoothstep(1150, 2600, r) * 120) * notch;
         },
       },
       // Earthrise Summit massif with a gentler eastern spur to climb.
@@ -183,6 +190,16 @@ export class MoonSurface extends Location {
       stamps,
     });
     const hf = this.hf;
+    // The true summit: highest ground near the massif centre (props and the relay sit here).
+    let best = -Infinity;
+    for (let dx = -80; dx <= 80; dx += 4)
+      for (let dz = -80; dz <= 80; dz += 4) {
+        const h = hf.heightAt(SUMMIT.x + dx, SUMMIT.y + dz);
+        if (h > best) {
+          best = h;
+          this.peak.set(SUMMIT.x + dx, SUMMIT.y + dz);
+        }
+      }
 
     const regolithTex = regolithDetailTexture();
     const terrainMat = new THREE.MeshStandardMaterial({
@@ -317,7 +334,7 @@ export class MoonSurface extends Location {
       ramp: { id: 'ramp', position: rampFoot, yaw: -Math.PI / 2 },
       airlock: { id: 'airlock', position: airlockOut, yaw: -Math.PI / 2 },
       base: { id: 'base', position: this.ground(BASE_CENTER.x, BASE_CENTER.y + 6), yaw: 0 },
-      summit: { id: 'summit', position: this.ground(SUMMIT.x + 12, SUMMIT.y + 4), yaw: Math.PI / 2 },
+      summit: { id: 'summit', position: this.ground(this.peak.x + 10, this.peak.y + 6), yaw: Math.PI / 2 },
       k9: { id: 'k9', position: this.ground(K9.x - 10, K9.y + 25), yaw: 0 },
       landing: { id: 'landing', position: this.ground(BASE_CENTER.x - 30, BASE_CENTER.y + 40), yaw: 0 },
     };
@@ -799,7 +816,7 @@ export class MoonSurface extends Location {
 
   private buildSummit(): void {
     const store = this.game.store;
-    const peak = this.ground(SUMMIT.x, SUMMIT.y);
+    const peak = this.ground(this.peak.x, this.peak.y);
     // Survey cairn marks the summit
     const cairn = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.6, 5), new THREE.MeshStandardMaterial({ color: '#8f8b85', flatShading: true }));
     cairn.position.copy(peak).add(new THREE.Vector3(-3, 0.8, 2));
@@ -1097,9 +1114,17 @@ export class MoonSurface extends Location {
         }
       }
       // Earth becomes visible from the summit: a designed moment.
-      if (!s.flags['earth.seen.moon'] && Math.hypot(p.x - SUMMIT.x, p.z - SUMMIT.y) < 45 && p.y > this.hf.heightAt(SUMMIT.x, SUMMIT.y) - 25) {
+      if (!s.flags['earth.seen.moon'] && Math.hypot(p.x - this.peak.x, p.z - this.peak.y) < 120 && this.earthVisibleFrom(game.player.head())) {
         game.store.setFlag('earth.seen.moon', true);
         game.audio.stinger('wonder');
+        // Helmet visor zoom: Earth is only ~2° across from here, so let the player really see it.
+        const head = game.player.head();
+        game.player.frozen = true;
+        game.cam.setOverride({ position: head, target: head.clone().addScaledVector(EARTH_DIR, 1000), fov: 9 }, 1.2);
+        setTimeout(() => {
+          game.cam.setOverride(null);
+          game.player.frozen = false;
+        }, 7000);
         game.showLocationTitle('Earthrise', 'Home, on the horizon');
         pushNotification('Earth — 384,400 km away', 'discovery');
         game.store.batch('earthdb', () => {
@@ -1177,6 +1202,20 @@ export class MoonSurface extends Location {
       if (q('mq.kepler') && !s.universe.discovered['moon.kepler9']) add(K9.x, K9.y, '▶ Kepler-9', '#ffb347');
     }
     return out;
+  }
+
+  /** Honest line-of-sight test: is the top of Earth's disc above the terrain horizon from here? */
+  earthVisibleFrom(eye: THREE.Vector3): boolean {
+    const ex = EARTH_DIR.x, ez = EARTH_DIR.z;
+    const n = Math.hypot(ex, ez);
+    const earthTop = Math.asin(EARTH_DIR.y) + THREE.MathUtils.degToRad(0.9);
+    for (let d = 15; d < 6000; d += d < 400 ? 8 : 40) {
+      const px = eye.x + (ex / n) * d, pz = eye.z + (ez / n) * d;
+      const r = Math.hypot(px, pz);
+      const h = Math.abs(px) < 1020 && Math.abs(pz) < 1020 ? this.hf.heightAt(px, pz) : this.hf.evaluate(px, pz).h - (r * r) / (2 * CURVATURE_R);
+      if (Math.atan2(h - eye.y, d) > earthTop) return false;
+    }
+    return true;
   }
 
   override temperatureAt(pos: THREE.Vector3): number {
