@@ -172,6 +172,20 @@ select, input[type=text] { background: #0e1822; color: var(--text); border: 1px 
 .marker.sel .diamond { font-size: 24px; }
 .marker.behind { opacity: 0.45; }
 
+/* Objective waypoint (on foot) */
+.wp { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; color: #ffcf6a; text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.6); white-space: nowrap; transition: opacity 0.2s; }
+.wp .wp-icon { font-size: 22px; line-height: 22px; font-weight: 700; animation: wpPulse 1.6s ease-in-out infinite; }
+.wp .wp-arrow { font-size: 22px; line-height: 22px; display: inline-block; }
+.wp .wp-label { font-size: 12px; letter-spacing: 0.04em; margin-top: 2px; }
+.wp .wp-dist { font-size: 11px; opacity: 0.8; }
+.wp.route { color: #9fe8ff; }
+.wp.oxygen { color: #7fd3ff; }
+.wp.oxygen .wp-icon { font-size: 15px; border: 2px solid currentColor; border-radius: 50%; padding: 4px 3px; }
+.wp.near { opacity: 0.45; }
+.wp.edge .wp-label { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.wp-crumb { position: absolute; transform: translate(-50%, -50%); color: rgba(255, 207, 106, 0.55); font-size: 11px; pointer-events: none; text-shadow: 0 1px 2px #000; }
+@keyframes wpPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
 /* Reader (logs, recordings, carvings) */
 .reader { max-width: 620px; font-size: 15px; line-height: 1.6; color: #d8e4ea; white-space: pre-wrap; }
 .reader p { margin: 0 0 12px; }

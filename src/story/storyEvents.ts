@@ -17,7 +17,8 @@ export function registerStoryEvents(game: Game): void {
   /** Queue lines of dialogue as subtitles (radio-filtered when in vacuum). */
   const say = (lines: [string, string, number?][]) => {
     let delay = 0;
-    for (const [speaker, text, dur = 4.2] of lines) {
+    for (const [speaker, text, given = 4.2] of lines) {
+      const dur = Math.max(given, game.voices.duration(speaker, text) + 0.3);
       setTimeout(() => {
         const vac = game.currentLocation?.env.atmosphere === 'vacuum' || !game.currentLocation?.isPressurized(game.player.head());
         if (vac) game.audio.play('radio', 0.5);

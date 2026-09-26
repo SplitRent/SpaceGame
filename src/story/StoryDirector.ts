@@ -5,6 +5,8 @@ export interface ObjectiveView {
   title: string;
   objective: string;
   questId: string;
+  stageId: string;
+  objectiveId: string | null;
 }
 
 /**
@@ -97,7 +99,7 @@ export class StoryDirector {
     const stage = def?.stages.find((s) => s.id === q.stage);
     if (!def || !stage) return null;
     const next = stage.objectives.find((o) => !q.progress[o.id] && !o.optional) ?? stage.objectives[0];
-    return { title: def.title, objective: next?.text ?? stage.journal, questId: id };
+    return { title: def.title, objective: next?.text ?? stage.journal, questId: id, stageId: stage.id, objectiveId: next?.id ?? null };
   }
 
   currentObjectiveText(): string | null {

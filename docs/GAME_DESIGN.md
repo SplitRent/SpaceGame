@@ -129,7 +129,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 - **Base:** modular (pads → module → materials → construct → functional). Power budget with day/night (solar + batteries). Visibly grows from emergency camp to outpost.
 - **Combat:** minimal, tool-based; hazards, drones, later hostile machines. Not a shooter.
 - **Death:** respawn at the last safe point (ship/base/station med bay); suit resources drop in a recoverable cache; quest items kept.
-- **Quests:** data-driven, investigative, clue-based; optional markers (accessibility).
+- **Quests:** data-driven, investigative, clue-based. An on-screen objective waypoint (on by default, can be turned off) points at the current objective or the next hop toward it.
 - **Dialogue:** state-dependent, remembered, relationship-aware.
 - **Economy:** secondary; stations trade supplies, parts, information.
 - **Progression:** knowledge, equipment, ship, base, access — **no character levels**.
@@ -172,7 +172,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 - Cinematics for major moments only (launch, crash, base activation, first launch, first arrivals, revelations), always skippable with identical state results.
 - **Designed wow moments:** Earth from orbit (opening), Lantern scale reveal, Earthrise from the summit, first launch, Mars from orbit, Jupiter filling the sky, Saturn's rings, standing on Pluto, leaving Pluto behind, first unknown planet, the revelation about the crash.
 - **Audio** sells environments; music is dynamic, reserved for discovery, danger, story and arrivals.
-- Minimal quest markers; the world, logs, scanner and crew guide the player.
+- One unobtrusive objective waypoint; the world, logs, scanner and crew carry the rest of the guidance.
 
 ## 12. Architecture principles (details in `ARCHITECTURE.md`)
 
@@ -209,7 +209,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 5. Combat — *Default: low intensity, tool-based.*
 6. Rover — *Default: EARLY tier, not in Act 1.*
 7. Controls — *Default: desktop keyboard/mouse, rebindable; gamepad later.*
-8. Voice — *Default: text + subtitles + synthesized radio blips.*
+8. Voice — *Resolved: every character speaks with a cast speech-synthesis voice (register, accent, pitch, rate per character), plus subtitles and radio blips.*
 9. Names — placeholders pending confirmation.
 
 ## 16. Decision log
@@ -238,3 +238,5 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 | 2026-09-26 | Worlds after Mars are data (SurfaceDef/InteriorDef); all anomaly scans are scanner tier 1 so no scan can block the main story. |
 | 2026-09-26 | Outer-system suit liners (from Ceres Deep) rate the suit to −230 °C, so Europa, Titan and Pluto are survivable without constant heater drain; Europa’s radiation is a slow health drain as a time pressure. |
 | 2026-09-26 | Never stranded: landing is always possible (near-empty tank → autopilot glide), every landable world has ice, and the Lantern carries an onboard propellant still. |
+| 2026-09-26 | Playtest feedback: objective waypoint on by default (routes through exits, the ship, pilot seat or star map; O₂ refill overrides when low); consoles close with Space/E/right-click so Esc never fights fullscreen; first person hides the player body; every character is voiced with speech synthesis. |
+| 2026-09-26 | The Air quest can't soft-lock: the emergency crate carries sealant for both breaches, and a workshop cabinet refills exactly what the remaining breaches need. |

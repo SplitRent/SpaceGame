@@ -45,16 +45,16 @@ export const QUESTS: QuestDef[] = [
     stages: [
       {
         id: 'wake', journal: 'I woke in the medbay. The Lantern is dark, silent, and lying at an angle.',
-        objectives: [{ id: 'find', text: 'Find the crew — Mira is down in engineering (Deck 3, aft)', done: { flag: 'met.castellanos' } }],
+        objectives: [{ id: 'find', text: 'Find Mira in engineering — walk aft down the corridor and take the stairs to Deck 3', done: { flag: 'met.castellanos' } }],
         next: 'power',
       },
       {
         id: 'power', journal: 'Mira: the batteries survived, but their fuel cell was thrown into the cargo hold. No power means no air.',
         objectives: [
-          { id: 'cell', text: 'Find the emergency fuel cell (cargo hold, Deck 3)', done: { any: [{ hasItem: 'fuelcell' }, { system: 'power.batteries', step: 'fuelcell' }] } },
-          { id: 'seat', text: 'Seat the fuel cell in the engineering battery bay', done: { system: 'power.batteries', step: 'fuelcell' } },
-          { id: 'breakers', text: 'Close the bus breakers — upstream first', done: { system: 'power.batteries', step: 'breakers' } },
-          { id: 'online', text: 'Energize the ship', done: { system: 'power.batteries' } },
+          { id: 'cell', text: 'Open the red-banded emergency crate in the cargo hold (Deck 3) to get the fuel cell', done: { any: [{ hasItem: 'fuelcell' }, { system: 'power.batteries', step: 'fuelcell' }] } },
+          { id: 'seat', text: 'Seat the fuel cell in the battery bay (engineering, Deck 3)', done: { system: 'power.batteries', step: 'fuelcell' } },
+          { id: 'breakers', text: 'At the power distribution panel (engineering), close MAIN BUS first, then DIST A and B, then the rest', done: { system: 'power.batteries', step: 'breakers' } },
+          { id: 'online', text: 'Press BUS ONLINE on the power distribution panel', done: { system: 'power.batteries' } },
         ],
         next: 'complete',
       },
@@ -67,19 +67,22 @@ export const QUESTS: QuestDef[] = [
     autoStart: { questDone: 'mq.aftermath' },
     stages: [
       {
-        id: 'seal', journal: 'The fabricator in the workshop can sinter hull sealant from regolith and scrap.',
+        id: 'seal', journal: 'Each breach takes 2 hull sealant. The emergency crate in the cargo hold had some, and the workshop’s maintenance cabinet holds spares. The ship is still in vacuum: if suit O₂ runs low, the suit lockers (Deck 2, suit room) refill it.',
         objectives: [
-          { id: 'regolith', text: 'Gather regolith outside (hold the multi-tool on the ground)', done: { any: [{ hasItem: 'regolith', qty: 4 }, { flag: 'crafted.sealant' }, { system: 'life.hull' }] }, optional: true },
-          { id: 'corridor', text: 'Seal the corridor breach (Deck 2)', done: { system: 'life.hull', step: 'breach.corridor' } },
-          { id: 'lab', text: 'Seal the laboratory breach', done: { system: 'life.hull', step: 'breach.lab' } },
+          {
+            id: 'sealant', text: 'Get hull sealant — the maintenance cabinet in the workshop (Deck 2) has spares',
+            done: { any: [{ hasItem: 'sealant', qty: 2 }, { all: [{ system: 'life.hull', step: 'breach.corridor' }, { system: 'life.hull', step: 'breach.lab' }] }] },
+          },
+          { id: 'corridor', text: 'Seal the corridor breach — the hissing hole in the Deck 2 corridor ceiling, near the lab', done: { system: 'life.hull', step: 'breach.corridor' } },
+          { id: 'lab', text: 'Seal the laboratory breach — the lab wall, Deck 2 (port side)', done: { system: 'life.hull', step: 'breach.lab' } },
         ],
         next: 'scrub',
       },
       {
         id: 'scrub', journal: 'Hull sealed. The life support plant needs CO₂ scrubber cartridges before it can repressurize.',
         objectives: [
-          { id: 'cart', text: 'Load two CO₂ scrubber cartridges (life support plant, Deck 3)', done: { system: 'life.support', step: 'scrubbers' } },
-          { id: 'press', text: 'Repressurize the ship', done: { system: 'life.support' } },
+          { id: 'cart', text: 'Load the two CO₂ scrubber cartridges from the crate at the life support console (Deck 3)', done: { system: 'life.support', step: 'scrubbers' } },
+          { id: 'press', text: 'Press REPRESSURIZE on the life support console', done: { system: 'life.support' } },
         ],
         next: 'complete',
       },

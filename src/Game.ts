@@ -21,6 +21,8 @@ import { SaveManager, buildSaveFile, type SlotId } from './save/SaveManager';
 import { ToolSystem } from './gameplay/tools';
 import { CraftingSystem } from './gameplay/crafting';
 import { StoryDirector } from './story/StoryDirector';
+import { WaypointSystem } from './gameplay/waypoints';
+import { VoiceSystem } from './audio/VoiceSystem';
 import { BaseSystem } from './gameplay/base';
 import { TravelSystem } from './gameplay/travel';
 import { moonSunFactor } from './locations/moon/moonSky';
@@ -38,6 +40,11 @@ export interface Settings {
   navAssist: 'off' | 'hints' | 'markers';
   volumes: { master: number; sfx: number; ambience: number; music: number };
   subtitles: boolean;
+  /** Character voices (speech synthesis). */
+  voices: boolean;
+  voiceVolume: number;
+  /** Settings schema version (for one-time default migrations). */
+  v: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -45,9 +52,12 @@ const DEFAULT_SETTINGS: Settings = {
   sensitivity: 1,
   invertY: false,
   fov: 72,
-  navAssist: 'hints',
+  navAssist: 'markers',
   volumes: { master: 0.8, sfx: 0.9, ambience: 0.7, music: 0.6 },
   subtitles: true,
+  voices: true,
+  voiceVolume: 1,
+  v: 2,
 };
 
 /**
@@ -71,6 +81,8 @@ export class Game {
   readonly tools: ToolSystem;
   readonly crafting: CraftingSystem;
   readonly story: StoryDirector;
+  readonly waypoints: WaypointSystem;
+  readonly voices: VoiceSystem;
   readonly base: BaseSystem;
   readonly travel: TravelSystem;
   settings: Settings = loadSettings();
@@ -78,6 +90,7 @@ export class Game {
   panel: PanelController | null = null;
   inGame = false;
   paused = false;
+  private panelOpenedAt = 0;
   private last = 0;
   private hudTimer = 0;
   private autosaveTimer = 0;
@@ -103,6 +116,8 @@ export class Game {
     this.story = new StoryDirector(this);
     this.base = new BaseSystem(this.store);
     this.travel = new TravelSystem(this);
+    this.waypoints = new WaypointSystem(this);
+    this.voices = new VoiceSystem(this);
     registerStoryEvents(this);
   }
 
@@ -442,6 +457,9 @@ export class Game {
       this.hudTimer = 0;
       this.updateHud();
     }
+    this.voices.setPaused(this.paused);
+    if (this.inGame) this.waypoints.update(dt);
+    else this.waypoints.clear();
     if (this.inGame && loc) this.renderer.render(dt);
     else this.renderTitleBackdrop(dt);
     input.endFrame();
@@ -493,7 +511,15 @@ export class Game {
     if (ctx === 'dialogue') {
       if (input.justPressed('skip', 'dialogue') || input.justPressed('interact', 'dialogue')) this.dialogue.continue();
     }
-    if (ctx === 'panel' && input.justPressed('pause', 'panel')) this.closePanel();
+    if (ctx === 'panel' && performance.now() - this.panelOpenedAt > 250) {
+      // Space / E / right-click / X step back from a panel. Esc still works but in fullscreen
+      // browsers use it to leave fullscreen, so it is no longer the advertised key.
+      if (
+        input.justPressed('jump', 'panel') || input.justPressed('interact', 'panel') ||
+        input.justPressed('secondary', 'panel') || input.justPressed('exitSeat', 'panel') ||
+        input.justPressed('pause', 'panel')
+      ) this.closePanel();
+    }
     if (ctx === 'ui' && (input.justPressed('pause', 'ui') || input.justPressed('inventory', 'ui') && ui.overlay.value === 'inventory')) this.closeOverlay();
   }
 
@@ -749,6 +775,7 @@ export class Game {
   openPanel(p: PanelController): void {
     if (this.panel) return;
     this.panel = p;
+    this.panelOpenedAt = performance.now();
     this.input.push('panel');
     this.cam.setOverride(p.cameraPose(), 4);
     this.cam.forceFirst = true;
@@ -855,7 +882,12 @@ export class Game {
 function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem('lantern:settings');
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Settings>;
+      // v2: on-screen objective waypoints became the default.
+      if (!saved.v || saved.v < 2) saved.navAssist = 'markers';
+      return { ...DEFAULT_SETTINGS, ...saved, v: DEFAULT_SETTINGS.v };
+    }
   } catch {
     /* ignore */
   }

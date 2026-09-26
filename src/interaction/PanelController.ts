@@ -45,7 +45,7 @@ export abstract class PanelController {
 
   open(): void {
     this.isOpen = true;
-    ui.panelHelp.value = `${this.title} — click controls · Esc to step back`;
+    ui.panelHelp.value = `${this.title} — click controls · Space, E or right-click to step back`;
     this.game.player.model.root.visible = false;
     this.onOpen();
   }

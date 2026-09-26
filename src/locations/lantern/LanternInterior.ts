@@ -871,6 +871,10 @@ export class LanternInterior extends Location {
     }
   }
 
+  override oxygenWaypoint(): { key: string; label: string } | null {
+    return { key: 'it:suit.locker', label: 'O₂ refill — suit locker' };
+  }
+
   override onEnter(): void {
     const s = this.game.store.state;
     if (s.flags.crashed && !s.flags['hint.ship']) {

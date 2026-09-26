@@ -18,6 +18,46 @@ export interface NavGraph {
   edges: [string, string][];
 }
 
+/** Shortest route over a nav graph (Dijkstra; graphs are tiny), ending exactly at `to`. */
+export function navPath(nav: NavGraph, from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] {
+  const nodes = nav.nodes;
+  const ids = Object.keys(nodes);
+  if (!ids.length) return [to.clone()];
+  const nearest = (p: THREE.Vector3) => ids.reduce((b, id) => (nodes[id].distanceTo(p) < nodes[b].distanceTo(p) ? id : b), ids[0]);
+  const a = nearest(from), b = nearest(to);
+  const dist: Record<string, number> = {};
+  const prev: Record<string, string | null> = {};
+  const open = new Set(ids);
+  for (const id of ids) dist[id] = Infinity;
+  dist[a] = 0;
+  prev[a] = null;
+  while (open.size) {
+    let u: string | null = null;
+    for (const id of open) if (u === null || dist[id] < dist[u]) u = id;
+    if (u === null || dist[u] === Infinity) break;
+    open.delete(u);
+    if (u === b) break;
+    for (const [x, y] of nav.edges) {
+      const v = x === u ? y : y === u ? x : null;
+      if (!v || !open.has(v)) continue;
+      const nd = dist[u] + nodes[u].distanceTo(nodes[v]);
+      if (nd < dist[v]) {
+        dist[v] = nd;
+        prev[v] = u;
+      }
+    }
+  }
+  const path: THREE.Vector3[] = [];
+  let cur: string | null | undefined = b;
+  while (cur) {
+    path.unshift(nodes[cur].clone());
+    cur = prev[cur];
+  }
+  if (path[0] && path[0].distanceTo(from) < 0.5) path.shift();
+  path.push(to.clone());
+  return path;
+}
+
 interface NpcInstance {
   def: NpcDef;
   model: Astronaut;
@@ -45,7 +85,9 @@ export class CrewRuntime {
     private spots: Record<string, Spot>,
     private groundY: (x: number, z: number, fallback: number) => number,
     private nav: NavGraph | null = null,
-  ) {}
+  ) {
+    if (nav) loc.nav = nav;
+  }
 
   refresh(): void {
     const store = this.game.store;
@@ -113,43 +155,7 @@ export class CrewRuntime {
   }
 
   private findPath(from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] {
-    if (!this.nav) return [to.clone()];
-    const nodes = this.nav.nodes;
-    const ids = Object.keys(nodes);
-    const nearest = (p: THREE.Vector3) => ids.reduce((b, id) => (nodes[id].distanceTo(p) < nodes[b].distanceTo(p) ? id : b), ids[0]);
-    const a = nearest(from), b = nearest(to);
-    // Dijkstra (graphs are tiny)
-    const dist: Record<string, number> = {};
-    const prev: Record<string, string | null> = {};
-    const open = new Set(ids);
-    for (const id of ids) dist[id] = Infinity;
-    dist[a] = 0;
-    prev[a] = null;
-    while (open.size) {
-      let u: string | null = null;
-      for (const id of open) if (u === null || dist[id] < dist[u]) u = id;
-      if (u === null || dist[u] === Infinity) break;
-      open.delete(u);
-      if (u === b) break;
-      for (const [x, y] of this.nav.edges) {
-        const v = x === u ? y : y === u ? x : null;
-        if (!v || !open.has(v)) continue;
-        const nd = dist[u] + nodes[u].distanceTo(nodes[v]);
-        if (nd < dist[v]) {
-          dist[v] = nd;
-          prev[v] = u;
-        }
-      }
-    }
-    const path: THREE.Vector3[] = [];
-    let cur: string | null | undefined = b;
-    while (cur) {
-      path.unshift(nodes[cur].clone());
-      cur = prev[cur];
-    }
-    if (path[0] && path[0].distanceTo(from) < 0.5) path.shift();
-    path.push(to.clone());
-    return path;
+    return this.nav ? navPath(this.nav, from, to) : [to.clone()];
   }
 
   update(dt: number): void {
@@ -232,13 +238,14 @@ export class CrewRuntime {
     if (radio) this.game.audio.play('radio', 0.5);
     ui.subtitle.value = { speaker: name(b.npc), text: b.text };
     const reply = b.reply;
+    const hold = (sp: string, text: string) => Math.max(4500, (this.game.voices.duration(sp, text) + 0.4) * 1000);
     setTimeout(() => {
       if (reply) {
         if (radio) this.game.audio.play('radio', 0.5);
         ui.subtitle.value = { speaker: name(reply.npc), text: reply.text };
-        setTimeout(() => (ui.subtitle.value = null), 4500);
+        setTimeout(() => (ui.subtitle.value = null), hold(name(reply.npc), reply.text));
       } else ui.subtitle.value = null;
-    }, 4500);
+    }, hold(name(b.npc), b.text));
   }
 
   /** World position of an NPC (for cinematics/markers). */

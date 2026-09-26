@@ -4,6 +4,7 @@ import { PhysicsWorld } from '../physics/Physics';
 import type { Game } from '../Game';
 import type { Interactable } from '../interaction/Interactable';
 import { ParticlePool } from '../render/particles';
+import type { NavGraph } from '../gameplay/crew';
 
 /** Something the multi-tool can work on (mining node, weld point, cut panel). */
 export interface ToolTarget {
@@ -81,6 +82,8 @@ export abstract class Location {
   killY = -200;
   /** Ambient temperature below which suit heaters strain (outer-system liners lower it). */
   coldLimit = -150;
+  /** Walkable graph (interiors); used by crew pathing and objective waypoint breadcrumbs. */
+  nav: NavGraph | null = null;
 
   constructor(protected game: Game, gravity: number) {
     this.scope = game.scope.child(`location`);
@@ -119,6 +122,58 @@ export abstract class Location {
 
   /** Called before disposal. */
   onExit(): void {}
+
+  /**
+   * World position for an objective waypoint key, or null if it isn't in this location.
+   * Keys: `it:<id>` interactable, `itp:<prefix>` / `its:<suffix>` nearest available
+   * interactable by id prefix/suffix, `npc:<id>`, `tool:<prefix>` nearest workable tool
+   * target, `scan:<entry>` nearest scannable. Subclasses add `zone:`, `poi:`, `pos:`…
+   */
+  waypointPos(key: string, from: THREE.Vector3): THREE.Vector3 | null {
+    const colon = key.indexOf(':');
+    const kind = key.slice(0, colon);
+    const arg = key.slice(colon + 1);
+    const center = (o: THREE.Object3D) => {
+      const box = new THREE.Box3().setFromObject(o);
+      return box.isEmpty() ? o.getWorldPosition(new THREE.Vector3()) : box.getCenter(new THREE.Vector3());
+    };
+    const nearest = <T>(items: T[], obj: (t: T) => THREE.Object3D): THREE.Vector3 | null => {
+      let best: THREE.Vector3 | null = null;
+      let bd = Infinity;
+      for (const t of items) {
+        const p = obj(t).getWorldPosition(new THREE.Vector3());
+        const d = p.distanceToSquared(from);
+        if (d < bd) {
+          bd = d;
+          best = p;
+        }
+      }
+      return best;
+    };
+    switch (kind) {
+      case 'it':
+      case 'npc': {
+        const id = kind === 'npc' ? `npc:${arg}` : arg;
+        const it = this.interactables.find((i) => i.id === id);
+        return it ? center(it.object) : null;
+      }
+      case 'itp':
+      case 'its': {
+        const list = this.interactables.filter((i) => (kind === 'itp' ? i.id.startsWith(arg) : i.id.endsWith(arg)) && (!i.available || i.available()));
+        return nearest(list, (i) => i.object);
+      }
+      case 'tool':
+        return nearest(this.toolTargets.filter((t) => t.id.startsWith(arg) && t.available()), (t) => t.object);
+      case 'scan':
+        return nearest(this.scannables.filter((sc) => sc.entry === arg), (sc) => sc.object);
+    }
+    return null;
+  }
+
+  /** Where to refill suit oxygen from here (waypoint key + label), if anywhere. */
+  oxygenWaypoint(): { key: string; label: string } | null {
+    return null;
+  }
 
   registerInteractable(i: Interactable): void {
     this.interactables.push(i);

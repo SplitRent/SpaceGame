@@ -44,7 +44,7 @@ Dev shortcuts (dev server only): `?start=moon | ship | rich | powered | k9 | lau
 ## Known limitations / next steps
 
 - Characters and props are procedural low-poly; CC0 art packs are not wired in yet (`assets:fetch` is planned, not implemented).
-- No voice acting; text + subtitles + synthesised radio.
+- Voices use the browser's speech synthesis, so quality and accents depend on the voices your OS/browser provides (Edge/Windows and macOS have the best ones).
 - Kepler-9 drones are the only hostile; wildlife arrives with fictional worlds (Act 4).
 - Earth is orbit-only (a homecoming landing region is a possible future addition); Uranus and Neptune are visible but not destinations.
 - Transit events are authored beats (one per route at the halfway point), not yet interactive encounters.

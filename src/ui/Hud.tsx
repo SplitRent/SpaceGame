@@ -66,6 +66,30 @@ function FlightHud({ h }: { h: NonNullable<HudData['flight']> }) {
   );
 }
 
+function Waypoint() {
+  const w = ui.waypoint.value;
+  const c = ui.waypointCrumb.value;
+  return (
+    <>
+      {c && <div class="wp-crumb" style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%` }}>◆</div>}
+      {w && (
+        <div class={`wp ${w.kind} ${w.edge ? 'edge' : ''} ${w.near ? 'near' : ''}`} style={{ left: `${w.x * 100}%`, top: `${w.y * 100}%` }}>
+          {w.edge ? (
+            <span class="wp-arrow" style={{ transform: `rotate(${w.angle}rad)` }}>➤</span>
+          ) : (
+            <span class="wp-icon">{w.kind === 'oxygen' ? 'O₂' : '◇'}</span>
+          )}
+          <span class="wp-label">{w.label}</span>
+          <span class="wp-dist">
+            {w.dist}
+            {w.vert === 'up' ? ' ▲ above' : w.vert === 'down' ? ' ▼ below' : ''}
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function Hud() {
   const h = ui.hud.value;
   const prompt = ui.prompt.value;
@@ -79,6 +103,7 @@ export function Hud() {
         <FlightHud h={h.flight} />
       ) : (
         <>
+          {!inPanel && <Waypoint />}
           {!inPanel && ui.crosshair.value && <div class={`crosshair ${prompt ? 'active' : ''}`} />}
           <div class="vitals">
             <div class="suit-status">

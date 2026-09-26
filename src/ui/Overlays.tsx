@@ -197,7 +197,7 @@ export function SettingsPanel({ onBack }: { onBack: () => void }) {
         <select class="interactive" value={s.navAssist} onChange={(e) => upd({ navAssist: (e.target as HTMLSelectElement).value as Settings['navAssist'] })}>
           <option value="off">Off — logs, landmarks and scanner only</option>
           <option value="hints">Hints — objective text</option>
-          <option value="markers">Markers — objective text + map markers</option>
+          <option value="markers">Waypoints — on-screen objective marker + map markers</option>
         </select>
         <span />
       </div>
@@ -209,6 +209,16 @@ export function SettingsPanel({ onBack }: { onBack: () => void }) {
           <span>{Math.round(s.volumes[k] * 100)}</span>
         </div>
       ))}
+      <div class="setting">
+        <span>Character voices</span>
+        <input class="interactive" type="checkbox" checked={s.voices} onChange={(e) => upd({ voices: (e.target as HTMLInputElement).checked })} />
+        <span />
+      </div>
+      <div class="setting">
+        <span>Voice volume</span>
+        <input class="interactive" type="range" min="0" max="1" step="0.05" value={s.voiceVolume} onInput={(e) => upd({ voiceVolume: +(e.target as HTMLInputElement).value })} />
+        <span>{Math.round(s.voiceVolume * 100)}</span>
+      </div>
     </Panel>
   );
 }

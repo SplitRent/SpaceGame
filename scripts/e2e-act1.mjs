@@ -85,8 +85,9 @@ await page.screenshot({ path: 'screenshots/e2e-act1-01-emergency.png' });
 
 // Craft sealant at the fabricator (materials as if mined), seal both breaches
 await g(() => window.__t.give([['regolith', 8], ['scrap', 2]]));
+const sealantBefore = await g(() => window.__game.store.count('sealant'));
 const crafted = await g(() => window.__game.crafting.craft('r.sealant', 'fabricator'));
-ok(crafted && (await g(() => window.__game.store.count('sealant') === 4)), 'fabricator crafts hull sealant');
+ok(crafted && (await g((n) => window.__game.store.count('sealant') === n + 2, sealantBefore)), 'fabricator crafts hull sealant');
 await g(() => { window.__t.use('seal.breach.corridor'); window.__t.use('seal.breach.lab'); });
 ok(await g(() => window.__t.sys('life.hull').online), 'both breaches sealed → pressure hull online');
 
