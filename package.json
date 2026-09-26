@@ -1,0 +1,35 @@
+{
+  "name": "lantern-spacegame",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "LANTERN — an original 3D sci-fi exploration game that begins in the real Solar System.",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:content": "vitest run tests/content",
+    "test:e2e": "node scripts/e2e-smoke.mjs && node scripts/e2e-late.mjs && node scripts/e2e-mars.mjs && node scripts/e2e-finale.mjs"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "@preact/signals": "^2.11.2",
+    "idb-keyval": "^6.3.0",
+    "postprocessing": "^6.39.5",
+    "preact": "^10.29.8",
+    "simplex-noise": "^4.0.3",
+    "three": "^0.186.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "playwright-core": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
