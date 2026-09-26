@@ -24,6 +24,7 @@ const SEED = 4201;
 const CURVATURE_R = 260000;
 
 export const SHIP_POS = new THREE.Vector2(100, 120);
+let cachedField: HeightField | null = null;
 const SHIP_ROLL = THREE.MathUtils.degToRad(7);
 const BASE_CENTER = new THREE.Vector2(190, 182);
 const SHADOW_CRATER: Crater = { x: -520, z: 430, r: 230, depth: 85, rim: 22, age: 0.15 };
@@ -179,7 +180,8 @@ export class MoonSurface extends Location {
           flatten(x, z, h, BASE_CENTER.x, BASE_CENTER.y, 44, 30, cachedBase('ship', SHIP_POS.x, SHIP_POS.y, hf) + 30 * Math.tan(SHIP_ROLL)),
       },
     ];
-    this.hf = new HeightField({
+    // Terrain is deterministic: generate once per session and reuse on every visit.
+    this.hf = cachedField ??= new HeightField({
       seed: SEED,
       size: SIZE,
       cell: CELL,
@@ -644,6 +646,10 @@ export class MoonSurface extends Location {
     this.scene.add(halo);
     this.entityObjects.set('fragment.halo', halo);
     this.scannables.push({ entry: 'db.fragment', object: frag, range: 20 });
+    const scarProbe = new THREE.Mesh(new THREE.CylinderGeometry(SCAR.r, SCAR.r, 2, 16), new THREE.MeshBasicMaterial({ visible: false }));
+    scarProbe.position.copy(p);
+    this.scene.add(scarProbe);
+    this.entityObjects.set('scar.probe', scarProbe);
     this.registerInteractable({
       id: 'fragment',
       object: frag,
@@ -1066,8 +1072,8 @@ export class MoonSurface extends Location {
     const taken = !!store.getEntity(this.id, 'fragment', 'taken');
     const frag = this.entityObjects.get('fragment');
     if (frag) frag.visible = !taken;
-    const halo = this.entityObjects.get('fragment.halo');
-    if (halo) halo.visible = !taken;
+    const halo = this.entityObjects.get('fragment.halo') as THREE.PointLight | undefined;
+    if (halo) halo.visible = !taken || !!s.flags['scar.pulse'];
     for (let i = 0; i < 3; i++) {
       const w = this.entityObjects.get(`weld.${i}`) as THREE.Mesh | undefined;
       if (w) {
@@ -1099,6 +1105,16 @@ export class MoonSurface extends Location {
     for (const l of (this.csm as any).lights as THREE.DirectionalLight[]) l.intensity = 3.4 * elevFactor;
     this.csm.update();
     this.fill.intensity = 0.05 + elevFactor * 0.1;
+    // After the Harbor revelation the scar pulses with the Cadence (compressed: visible every ~20 s).
+    if (s.flags['scar.pulse']) {
+      const halo = this.entityObjects.get('fragment.halo') as THREE.PointLight | undefined;
+      if (halo) {
+        const ph = (s.clock % 19.69) / 19.69;
+        halo.intensity = ph < 0.08 ? 60 * (1 - ph / 0.08) : 2;
+      }
+      const probe = this.entityObjects.get('scar.probe');
+      if (probe && !this.scannables.some((x) => x.entry === 'db.scarpulse')) this.scannables.push({ entry: 'db.scarpulse', object: probe, range: 40 });
+    }
     // Base power simulation is global (Game.base), we only react visually here.
     this.crew.update(dt);
     // Discovery zones
@@ -1232,6 +1248,17 @@ export class MoonSurface extends Location {
   }
 
   override onEnter(): void {
+    const store = this.game.store;
+    // Returning after Harbor: the first world has changed.
+    if (store.state.flags['slice.complete'] && !store.state.flags['scar.pulse']) {
+      store.setFlag('scar.pulse', true);
+      const say = (this.game.story as any).say as ((l: [string, string, number?][]) => void) | undefined;
+      say?.([
+        ['Sola', 'Before you go anywhere — the impact scar. My instruments show it pulsing. Every 1,969 seconds.'],
+        ['Haddad', 'The fragment’s in our lab. So what’s keeping time out there?'],
+      ]);
+      pushNotification('New anomaly: the impact scar near the Lantern (scanner tier 2)', 'discovery');
+    }
     const ui0 = ui.hint;
     if (!this.game.store.state.flags['hint.moon']) {
       this.game.store.setFlag('hint.moon', true);

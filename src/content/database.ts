@@ -88,6 +88,11 @@ export const DATABASE: DatabaseEntryDef[] = [
     text: 'A standard pressurised cargo canister blown loose from Harbor Station’s logistics bay. Manifest intact.',
   },
   {
+    id: 'db.scarpulse', title: 'Impact Scar — Periodic Emission', category: 'anomaly', tier: 2,
+    text: 'Since the survivors’ transmission, the Blackglass impact scar emits a faint pulse in the far infrared every 1,969 seconds. The fragment is gone from the scar, yet the ground where it lay keeps time. Whatever the Blackglass left behind, it is still listening — or still talking.',
+    onScan: [{ setFlag: 'scar.pulse.scanned' }],
+  },
+  {
     id: 'db.harbor', title: 'Harbor Station', category: 'technology', tier: 1,
     text: 'Cislunar staging station in a near-rectilinear halo orbit over the lunar south pole. Docking for four vessels, a small hotel of a crew, and — until recently — the relay for the Cadence.',
   },

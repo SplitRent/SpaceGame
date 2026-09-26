@@ -609,7 +609,7 @@ function MapPanel() {
   return (
     <Panel title={`Map — ${LOCATION_REGISTRY[loc?.id]?.name ?? ''}`} sub="Discovered landmarks only" wide>
       {url ? (
-        <div style={{ position: 'relative', width: '640px', height: '640px', margin: '0 auto' }}>
+        <div style={{ position: 'relative', width: 'min(640px, 68vh)', height: 'min(640px, 68vh)', margin: '0 auto' }}>
           <img src={url} style={{ width: '100%', height: '100%', imageRendering: 'auto', filter: 'contrast(1.1)' }} />
           {markers.map((m, i) => (
             <div key={i} style={{ position: 'absolute', left: `${m.x * 100}%`, top: `${m.y * 100}%`, transform: 'translate(-50%,-50%)', fontSize: '11px', color: m.color, textShadow: '0 1px 2px #000', whiteSpace: 'nowrap' }}>◆ {m.label}</div>
