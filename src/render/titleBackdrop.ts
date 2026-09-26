@@ -13,7 +13,7 @@ export function buildTitleBackdrop(): { scene: THREE.Scene; camera: THREE.Perspe
   const sunDir = new THREE.Vector3(1, 0.25, 0.4).normalize();
   sky.sunDir.copy(sunDir);
   const earth = createPlanet('earth', 2400, { segments: 128 });
-  earth.group.position.set(-900, -2600, -3200);
+  earth.group.position.set(-1600, -3300, -6400);
   earth.group.rotation.set(0.3, 2.2, 0.1);
   scene.add(earth.group);
   const moon = createPlanet('moon', 180, { segments: 64 });
