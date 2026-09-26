@@ -22,7 +22,8 @@ export type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
   | { not: Condition }
-  | { always: true };
+  | { always: true }
+  | { never: true };
 
 export type Effect =
   | { setFlag: string; value?: FlagValue }
@@ -43,7 +44,11 @@ export type Effect =
   | { upgrade: { stat: 'oxygenMax' | 'suitPowerMax' | 'scannerTier'; value: number } }
   | { heal: number }
   | { refillOxygen: true }
-  | { story: string };
+  | { story: string }
+  /** Open a readable log/document (terminal, recorder, carving). */
+  | { log: { title: string; text: string } }
+  /** Move the player to another location/spawn (doors, lifts, hatches). */
+  | { travel: { location: string; spawn: string; label?: string } };
 
 /* ------------------------------ Items ------------------------------ */
 
@@ -249,7 +254,9 @@ export type BodyPlayMode = 'landable' | 'orbital' | 'stationHost' | 'backdrop';
 export interface CelestialBodyDef {
   id: string;
   name: string;
-  kind: 'star' | 'planet' | 'dwarf' | 'moon';
+  kind: 'star' | 'planet' | 'dwarf' | 'moon' | 'structure';
+  /** Star system (default 'sol'). */
+  system?: 'sol' | 'vesper';
   parent?: string;
   /** km */
   radiusKm: number;

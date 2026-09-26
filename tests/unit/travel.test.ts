@@ -44,7 +44,8 @@ describe('travel', () => {
     expect(travel.status(entry('earth'))).toMatchObject({ ok: false, locked: true });
     expect(travel.status(entry('earth')).reason).toMatch(/quarantine/i);
     expect(travel.status(entry('venus')).reason).toMatch(/thermal/i);
-    expect(travel.status(entry('jupiter')).reason).toMatch(/drive/i);
+    expect(travel.status(entry('europa')).reason).toMatch(/drive/i);
+    expect(travel.status(entry('jupiter')).reason).toMatch(/gas giant/i);
     expect(travel.status(entry('moon'))).toMatchObject({ ok: false, here: true });
     expect(travel.status(entry('mars')).ok).toBe(true);
     store.state.ship.parking = { kind: 'docked', locationId: 'harbor.interior', portId: 'dock' };

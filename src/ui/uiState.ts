@@ -19,7 +19,9 @@ export type Overlay =
   | 'death'
   | 'container'
   | 'shipstatus'
-  | 'newgame';
+  | 'newgame'
+  | 'reader'
+  | 'ending';
 
 export interface HudData {
   health: number;
@@ -111,6 +113,10 @@ export const ui = {
   hint: signal<string | null>(null),
   panelHelp: signal<string | null>(null),
   bootError: signal<string | null>(null),
+  /** Document shown by the reader overlay (logs, carvings, recordings). */
+  reader: signal<{ title: string; text: string } | null>(null),
+  /** Active ending sequence id (see content/endings.ts). */
+  ending: signal<string | null>(null),
   /** Screen-space flight markers (0..1 coords). */
   markers: signal<{ x: number; y: number; label: string; dist: string; selected: boolean; behind: boolean }[]>([]),
 };

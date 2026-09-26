@@ -8,11 +8,11 @@ import { NOISE3 } from './glsl';
  */
 export type PlanetKind =
   | 'sun' | 'mercury' | 'venus' | 'earth' | 'moon' | 'mars' | 'jupiter' | 'saturn'
-  | 'uranus' | 'neptune' | 'pluto' | 'charon' | 'europa' | 'ganymede' | 'titan' | 'phobos';
+  | 'uranus' | 'neptune' | 'pluto' | 'charon' | 'europa' | 'ganymede' | 'titan' | 'phobos' | 'ceres' | 'vesperb' | 'triton';
 
 const KIND_ID: Record<PlanetKind, number> = {
   sun: 0, earth: 1, moon: 2, mercury: 2, mars: 3, venus: 4, jupiter: 5, saturn: 5, uranus: 6, neptune: 7,
-  pluto: 8, charon: 2, europa: 9, ganymede: 2, titan: 4, phobos: 2,
+  pluto: 8, charon: 2, europa: 9, ganymede: 2, titan: 4, phobos: 2, ceres: 2, vesperb: 10, triton: 9,
 };
 
 interface Palette {
@@ -40,6 +40,9 @@ const PALETTES: Record<PlanetKind, Palette> = {
   neptune: { a: '#3a64d8', b: '#26409e', c: '#e8f0ff', atmo: '#5a86ff', atmoStrength: 0.6 },
   pluto: { a: '#c9b49a', b: '#7a4a33', c: '#f2ede4', atmo: '#9ec3ff', atmoStrength: 0.15 },
   europa: { a: '#e8e0d0', b: '#a0603c', c: '#f6f2ea', atmo: null, atmoStrength: 0 },
+  ceres: { a: '#6d6a66', b: '#4a4845', c: '#f4f2ea', atmo: null, atmoStrength: 0 },
+  vesperb: { a: '#c9a070', b: '#4a1f45', c: '#e8f0f4', atmo: '#9ab8ff', atmoStrength: 0.7 },
+  triton: { a: '#e6d8d0', b: '#b88a78', c: '#f4efe8', atmo: '#bcd0ff', atmoStrength: 0.1 },
 };
 
 const SURFACE_VERT = /* glsl */ `
@@ -201,6 +204,16 @@ void main(){
     col = mix(col, uColC, heart);
     col *= 0.9 + 0.15*snoise(p*20.0);
     terminatorSoft = 0.04;
+  } else if (uKind == 10) { // tidally locked terminator world (Vesper b): substellar point at +X
+    float s = vObjPos.x + 0.08*snoise(p*3.0);
+    vec3 desert = mix(uColA, uColA*0.8, fbm3(p*3.0));
+    vec3 ice = uColC * (0.9 + 0.1*snoise(p*5.0));
+    float lakes = smoothstep(0.55, 0.7, fbm3(p*4.0 + 2.0));
+    vec3 life = mix(uColB, vec3(0.12,0.35,0.42), lakes);
+    col = s > 0.0 ? mix(life, desert, smoothstep(0.12, 0.45, s)) : mix(life, ice, smoothstep(-0.12, -0.4, s));
+    float cloud = smoothstep(0.55, 0.8, fbm3(p*3.0 + vec3(uTime*0.004, 0.0, 0.0))) * smoothstep(0.5, 0.0, abs(s));
+    col = mix(col, vec3(0.95), cloud*0.6);
+    terminatorSoft = 0.12;
   } else { // europa: bright ice with reddish lineae
     col = uColA;
     float lines = smoothstep(0.03, 0.0, abs(snoise(p*4.0))) + smoothstep(0.02, 0.0, abs(snoise(p*9.0 + 3.0)));

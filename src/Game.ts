@@ -216,6 +216,11 @@ export class Game {
       pushNotification(`Pack full — ${e.lost} ${CONTENT.items[e.itemId]?.name ?? e.itemId} left behind`, 'warn');
     });
     this.store.events.on(this.stateScope, 'story', (e) => this.story.onStoryEvent(e.id));
+    this.store.events.on(this.stateScope, 'log', (e) => this.openReader(e.title, e.text));
+    this.store.events.on(this.stateScope, 'travel', (e) => {
+      // Deferred: effects often run inside an interaction handler mid-frame.
+      setTimeout(() => void this.locations.travel({ location: e.location, spawn: e.spawn }, { label: e.label ?? '' }), 0);
+    });
     this.store.events.on(this.stateScope, 'questCompleted', () => this.audio.stinger('quest'));
     this.store.events.on(this.stateScope, 'discovered', () => this.audio.stinger('discovery'));
     this.cam.view = state.player.cameraView;
@@ -705,6 +710,32 @@ export class Game {
     this.input.push('ui');
     if (o === 'pause' || o === 'saves' || o === 'settings') this.paused = true;
     ui.revision.value = this.store.revision + 1;
+  }
+
+  /** Play an ending sequence (Act 5), then return to free exploration. */
+  playEnding(id: string): void {
+    ui.ending.value = id;
+    if (ui.overlay.value) this.closeOverlay();
+    this.openOverlay('ending');
+    this.audio.stinger('wonder');
+  }
+
+  finishEnding(): void {
+    const id = ui.ending.value;
+    ui.ending.value = null;
+    ui.overlay.value = null;
+    ui.overlayArg.value = null;
+    this.paused = false;
+    this.input.pop('ui');
+    this.showLocationTitle('LANTERN', id ? 'The Solar System is yours to explore.' : '');
+    void this.autosave('After the ending');
+  }
+
+  /** Show a readable document (logs, recorders, carvings). */
+  openReader(title: string, text: string): void {
+    ui.reader.value = { title, text };
+    if (ui.overlay.value) this.closeOverlay();
+    this.openOverlay('reader');
   }
 
   closeOverlay(): void {

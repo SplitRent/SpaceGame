@@ -4,6 +4,7 @@ import type { Game } from '../../Game';
 import { FlightModel } from '../../gameplay/flight';
 import { buildLantern, type LanternModel } from '../../procgen/lanternShip';
 import { buildHarbor, type HarborModel } from '../../procgen/harborStation';
+import { buildThreshold, buildAerostat } from '../../procgen/stations';
 import { createPlanet, type PlanetHandle, type PlanetKind } from '../../render/planets';
 import { Sky } from '../../render/sky';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
@@ -46,7 +47,7 @@ export class SpaceZone extends Location {
   private station: HarborModel | null = null;
   private bgScene = new THREE.Scene();
   private bgCam = new THREE.PerspectiveCamera(70, 1, 0.05, 200000);
-  private planet!: PlanetHandle;
+  private planet: PlanetHandle | null = null;
   private backdrop: PlanetHandle[] = [];
   private sky!: Sky;
   private sunDir: THREE.Vector3;
@@ -75,7 +76,7 @@ export class SpaceZone extends Location {
   }
 
   private get altitude(): number {
-    return this.def.originAltKm * 1000 + this.flight.position.y;
+    return this.def.planet ? this.def.originAltKm * 1000 + this.flight.position.y : Infinity;
   }
 
   async build(): Promise<void> {
@@ -88,11 +89,14 @@ export class SpaceZone extends Location {
     this.sky.sunDir.copy(this.sunDir);
     this.bgScene.add(this.sky.group);
     this.bgScene.background = new THREE.Color('#000');
-    this.planet = createPlanet(def.planet.kind as PlanetKind, def.planet.radiusKm, { segments: 192 });
-    if (def.planet.rot) this.planet.group.rotation.set(...def.planet.rot);
-    // We fly tens of km above a sphere thousands of km across: never frustum-cull it.
-    this.planet.group.traverse((o) => (o.frustumCulled = false));
-    this.bgScene.add(this.planet.group);
+    if (def.planet) {
+      const planet = createPlanet(def.planet.kind as PlanetKind, def.planet.radiusKm, { segments: 192 });
+      if (def.planet.rot) planet.group.rotation.set(...def.planet.rot);
+      // We fly tens of km above a sphere thousands of km across: never frustum-cull it.
+      planet.group.traverse((o) => (o.frustumCulled = false));
+      this.bgScene.add(planet.group);
+      this.planet = planet;
+    }
     for (const b of def.backdrop) {
       const p = createPlanet(b.kind as PlanetKind, b.radiusKm, { segments: b.radiusKm > 100 ? 128 : 48 });
       const pos = v3(b.pos);
@@ -100,12 +104,13 @@ export class SpaceZone extends Location {
       if (b.kind === 'earth') pos.setLength(38440);
       p.group.position.copy(pos);
       if (b.rot) p.group.rotation.set(...b.rot);
+      p.group.traverse((o) => (o.frustumCulled = false));
       this.bgScene.add(p.group);
       this.backdrop.push(p);
     }
     this.scope.add(() => {
       this.sky.dispose();
-      this.planet.dispose();
+      this.planet?.dispose();
       for (const p of this.backdrop) p.dispose();
     });
 
@@ -118,7 +123,8 @@ export class SpaceZone extends Location {
     this.scene.add(this.ship.group);
     this.scope.add(() => this.ship.dispose());
     if (def.station) {
-      this.station = buildHarbor();
+      const md = def.station.model;
+      this.station = md === 'threshold' ? buildThreshold(1) : md === 'gate' ? buildThreshold(0.45) : md === 'aerostat' ? buildAerostat() : buildHarbor();
       this.station.group.position.copy(v3(def.station.pos));
       this.station.group.rotation.set(...def.station.rot);
       this.scene.add(this.station.group);
@@ -132,7 +138,7 @@ export class SpaceZone extends Location {
     // ---- Targets
     this.targets = [];
     if (def.station) this.targets.push({ id: 'station', label: def.station.label, position: () => this.stationDock()!, scan: def.station.scan });
-    this.targets.push({ id: 'surface', label: def.landing.label, position: () => this.landingSite.clone(), scan: def.landing.scan });
+    if (def.landing) this.targets.push({ id: 'surface', label: def.landing.label, position: () => this.landingSite.clone(), scan: def.landing.scan });
     for (const sv of this.salvage) this.targets.push({ id: sv.id, label: def.salvage!.label, position: () => sv.mesh.position.clone(), scan: def.salvage!.scan });
 
     // ---- Initial ship state from parking
@@ -319,7 +325,7 @@ export class SpaceZone extends Location {
     for (const sv of this.salvage) sv.mesh.rotation.y += dt * 0.05;
     this.updateCamera(dt);
     // Background layer camera
-    const bgPos = new THREE.Vector3(this.flight.position.x * KM, def.planet.radiusKm + def.originAltKm + this.flight.position.y * KM, this.flight.position.z * KM);
+    const bgPos = new THREE.Vector3(this.flight.position.x * KM, (def.planet?.radiusKm ?? 0) + def.originAltKm + this.flight.position.y * KM, this.flight.position.z * KM);
     this.bgCam.position.copy(bgPos);
     this.bgCam.quaternion.copy(game.cam.camera.quaternion);
     this.bgCam.fov = game.cam.camera.fov;
@@ -327,7 +333,7 @@ export class SpaceZone extends Location {
     this.bgCam.near = 0.05;
     this.bgCam.updateProjectionMatrix();
     this.sky.update(this.bgCam.position, this.t, 1);
-    this.planet.update(this.t, this.sunDir);
+    this.planet?.update(this.t, this.sunDir);
     for (const p of this.backdrop) p.update(this.t, this.sunDir);
     // Station approach beat
     if (def.station) {
@@ -469,12 +475,14 @@ export class SpaceZone extends Location {
         return;
       }
     }
-    if (this.altitude < this.def.landAltM) {
+    // Landing corridor: below the landing altitude — or anywhere, on a near-empty tank
+    // (autopilot glide descent), so a dry ship is never stuck in orbit.
+    if (this.def.landing && (this.altitude < this.def.landAltM || this.game.store.state.ship.propellant < 300)) {
       void this.land();
       return;
     }
     pushNotification(
-      d < 1500 ? 'Slow down and close to 400 m of the docking port to dock.' : `Nothing to dock with. Descend below ${(this.def.landAltM / 1000).toFixed(0)} km to land: ${this.def.landing.label}.`,
+      d < 1500 ? 'Slow down and close to 400 m of the docking port to dock.' : this.def.landing ? `Nothing to dock with. Descend below ${(this.def.landAltM / 1000).toFixed(0)} km to land: ${this.def.landing.label}.` : 'Nothing in range to dock with.',
       'warn',
     );
   }
@@ -510,7 +518,7 @@ export class SpaceZone extends Location {
     const game = this.game;
     this.busy = true;
     const store = game.store;
-    const l = this.def.landing;
+    const l = this.def.landing!;
     // Powered descent. Never strands the ship: a nearly-dry tank still lands (hard).
     const cost = Math.min(DESCENT_COST[this.def.body] ?? 100, store.state.ship.propellant);
     store.batch('land', () => {
@@ -569,10 +577,10 @@ export class SpaceZone extends Location {
       assist: f.assist,
       target: t?.label ?? null,
       targetDist: d,
-      altitude: alt,
+      altitude: Number.isFinite(alt) ? alt : null,
       propellant: s.ship.propellant,
       hull: s.ship.hull,
-      mode: dock < 400 && f.speed < 60 ? 'DOCKING AVAILABLE (G)' : alt < this.def.landAltM ? 'LANDING AVAILABLE (G)' : f.boosting ? 'BOOST' : s.ship.propellant <= 0.5 ? 'RCS ONLY' : 'CRUISE',
+      mode: dock < 400 && f.speed < 60 ? 'DOCKING AVAILABLE (G)' : this.def.landing && alt < this.def.landAltM ? 'LANDING AVAILABLE (G)' : f.boosting ? 'BOOST' : s.ship.propellant <= 0.5 ? 'RCS ONLY' : 'CRUISE',
     };
   }
 }

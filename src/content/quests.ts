@@ -378,6 +378,188 @@ export const QUESTS: QuestDef[] = [
     rewards: [{ relationship: { npc: 'rao', delta: 5 } }],
   },
 
+  /* ============================ ACT 2 · THE NETWORK ============================ */
+  {
+    id: 'mq.network', title: 'The Network', kind: 'main', giver: 'haddad',
+    summary: 'Every place the Blackglass touched keeps the same time. Harbor’s burst log names one more node — on Ceres — and Ceres Deep has a drive that could take us much further.',
+    autoStart: { questDone: 'mq.footprints' },
+    stages: [
+      {
+        id: 'brief', journal: 'Rafi has been decoding Harbor’s burst log.',
+        objectives: [{ id: 'talk', text: 'Talk to Rafi aboard the Lantern', done: { flag: 'network.briefed' } }],
+        next: 'ceres',
+      },
+      {
+        id: 'ceres', journal: 'Ceres is at the edge of hydrolox range: 900 kg for the transfer. Plot it at the holo table from orbit.',
+        objectives: [{ id: 'fly', text: 'Travel to Ceres', done: { any: [{ discovered: 'ceres.orbit' }, { discovered: 'ceres.occator' }] } }],
+        next: 'land',
+      },
+      {
+        id: 'land', journal: 'Ceres Deep sits on the floor of Occator crater, beside the bright salt dome.',
+        objectives: [{ id: 'land', text: 'Land in Occator crater', done: { discovered: 'ceres.occator' } }],
+        next: 'deep',
+      },
+      {
+        id: 'deep', journal: 'The station’s drones locked everything down at 04:12:07.',
+        objectives: [{ id: 'meet', text: 'Meet the crew of Ceres Deep', done: { flag: 'ceres.met' } }],
+        next: 'pylons',
+      },
+      {
+        id: 'pylons', journal: 'Three drone relay pylons out on the salt hold the quarantine lock on the prototype hangar. Weld each one’s bypass (hold the multi-tool).',
+        objectives: [
+          { id: 'a', text: 'Reset drone relay A (west)', done: { flag: 'ceres.pylon.1' } },
+          { id: 'b', text: 'Reset drone relay B (south-east)', done: { flag: 'ceres.pylon.2' } },
+          { id: 'c', text: 'Reset drone relay C (east)', done: { flag: 'ceres.pylon.3' } },
+          { id: 'seed', text: 'Optional: visit the seed on Cerealia Facula', done: { flag: 'ceres.seed.touched' }, optional: true },
+        ],
+        next: 'hangar',
+      },
+      {
+        id: 'hangar', journal: 'With the quorum broken, the hangar hatch will open.',
+        objectives: [{ id: 'cradle', text: 'Raise the Kestrel cradle at the hangar hatch', done: { flag: 'ceres.hangar' } }],
+        next: 'install',
+      },
+      {
+        id: 'install', journal: 'Seat the core, install both coils, tune and ignite — at the new upgrade console in engineering (Deck 3, west wall).',
+        objectives: [{ id: 'torch', text: 'Install and ignite the Kestrel fusion torch', done: { system: 'prop.fusion' } }],
+        next: 'complete',
+      },
+    ],
+    rewards: [{ relationship: { npc: 'castellanos', delta: 10 } }],
+  },
+
+  /* ============================ ACT 3 · THE CADENCE ============================ */
+  {
+    id: 'mq.cadence', title: 'The Cadence', kind: 'main', giver: 'haddad',
+    summary: 'The Cadence is not one voice. Three nodes along the commander’s path each sing a line of it: Europa, Titan, Pluto.',
+    autoStart: { system: 'prop.fusion' },
+    stages: [
+      {
+        id: 'europa', journal: 'Europa first — a node under Conamara Chaos, and a gold-banded suit beacon beside it. Jupiter’s radiation is harsh: be quick outside.',
+        objectives: [
+          { id: 'land', text: 'Land on Europa', done: { discovered: 'europa.conamara' } },
+          { id: 'rec', text: 'Find the commander’s recorder', done: { flag: 'europa.recorder' } },
+          { id: 'scan', text: 'Scan the node (hold F)', done: { flag: 'cadence.1' } },
+        ],
+        next: 'titan',
+      },
+      {
+        id: 'titan', journal: 'Titan: a node in the shallows of Kraken Mare.',
+        objectives: [
+          { id: 'land', text: 'Land on Titan', done: { discovered: 'titan.kraken' } },
+          { id: 'rec', text: 'Find the commander’s second recorder', done: { flag: 'titan.recorder' } },
+          { id: 'scan', text: 'Scan the node', done: { flag: 'cadence.2' } },
+        ],
+        next: 'pluto',
+      },
+      {
+        id: 'pluto', journal: '“I’ll wait at Pluto.”',
+        objectives: [
+          { id: 'land', text: 'Land on Pluto', done: { discovered: 'pluto.sputnik' } },
+          { id: 'find', text: 'Find Commander Okonkwo', done: { flag: 'okonkwo.found' } },
+        ],
+        next: 'complete',
+      },
+    ],
+    rewards: [{ relationship: { npc: 'haddad', delta: 10 } }],
+  },
+
+  /* ============================ ACT 4 · THE THRESHOLD ============================ */
+  {
+    id: 'mq.threshold', title: 'The Threshold', kind: 'main', giver: 'okonkwo',
+    summary: 'Beyond Pluto, at 51 AU, the source of the Cadence: a door someone left open.',
+    autoStart: { flag: 'okonkwo.found' },
+    stages: [
+      {
+        id: 'fly', journal: 'The Threshold now shows on the star map. 1,200 kg for the transfer.',
+        objectives: [
+          { id: 'fly', text: 'Travel to the Threshold', done: { any: [{ discovered: 'threshold.zone' }, { flag: 'threshold.docked' }] } },
+          { id: 'dock', text: 'Dock with it', done: { flag: 'threshold.docked' } },
+        ],
+        next: 'door',
+      },
+      {
+        id: 'door', journal: 'Turn the Door’s rings to the three lines the nodes sang.',
+        objectives: [{ id: 'open', text: 'Open the Door (first-person glyph panel)', done: { flag: 'threshold.open' } }],
+        next: 'complete',
+      },
+    ],
+  },
+  {
+    id: 'mq.vesper', title: 'Vesper', kind: 'main', giver: 'okonkwo',
+    summary: 'Forty-one light-years from home, around an orange star, a world is alive.',
+    autoStart: { flag: 'threshold.open' },
+    stages: [
+      {
+        id: 'land', journal: 'Vesper b is tidally locked; life lives in the band of permanent dusk.',
+        objectives: [{ id: 'land', text: 'Land on Vesper b', done: { discovered: 'vesper.terminator' } }],
+        next: 'find',
+      },
+      {
+        id: 'find', journal: 'The Builders’ Archive signal comes from the south-west, past their ruins.',
+        objectives: [
+          { id: 'door', text: 'Find the Archive door', done: { discovered: 'vesper.archive.door' } },
+          { id: 'circle', text: 'Optional: read the plinth in the stone circle', done: { flag: 'vesper.circle.read' }, optional: true },
+          { id: 'life', text: 'Optional: scan a grazer', done: { scanned: 'db.grazer' }, optional: true },
+        ],
+        next: 'enter',
+      },
+      {
+        id: 'enter', journal: 'The door is open. It has been open for a billion years.',
+        objectives: [{ id: 'enter', text: 'Enter the Archive', done: { discovered: 'vesper.archive' } }],
+        next: 'complete',
+      },
+    ],
+  },
+
+  /* ============================ ACT 5 · THE TRUTH ============================ */
+  {
+    id: 'mq.truth', title: 'The Truth', kind: 'main', giver: 'okonkwo',
+    summary: 'The Archive shows everyone the same thing. It doesn’t lie.',
+    autoStart: { discovered: 'vesper.archive' },
+    stages: [
+      {
+        id: 'memories', journal: 'Three memory plinths: west alcove, east alcove, and the end of the nave.',
+        objectives: [
+          { id: 'm1', text: 'The Listening (west alcove)', done: { flag: 'archive.mem1' } },
+          { id: 'm2', text: 'The Answer (east alcove)', done: { flag: 'archive.mem2' } },
+          { id: 'm3', text: 'The Leaving (end of the nave)', done: { flag: 'archive.mem3' } },
+        ],
+        next: 'heart',
+      },
+      {
+        id: 'heart', journal: 'The crew has gathered in the Heart. The Archive is waiting for an answer.',
+        objectives: [{ id: 'choose', text: 'Talk to Okonkwo in the Heart — and choose', done: { flag: 'game.complete' } }],
+        next: 'complete',
+      },
+    ],
+  },
+
+  /* ============================ SIDE · OLDER THAN US ============================ */
+  {
+    id: 'sq.visited', title: 'Older Than Us', kind: 'side', giver: 'sola',
+    summary: 'With a thermal shield, the inner Solar System is open — and the aerostat Halcyon over Venus has found something under the clouds.',
+    autoStart: { system: 'hull.thermal' },
+    stages: [
+      {
+        id: 'halcyon', journal: 'Dock with Halcyon, fifty kilometres above Venus.',
+        objectives: [{ id: 'radar', text: 'See Halcyon’s deep radar survey', done: { flag: 'halcyon.radar' } }],
+        next: 'mercury',
+      },
+      {
+        id: 'mercury', journal: 'A radar-dark point in Chao Meng-Fu crater, at Mercury’s south pole.',
+        objectives: [{ id: 'scan', text: 'Find and scan the old spire on Mercury', done: { scanned: 'db.oldspire' } }],
+        next: 'report',
+      },
+      {
+        id: 'report', journal: 'Imani will want to see this.',
+        objectives: [{ id: 'imani', text: 'Tell Imani', done: { flag: 'oldspire.reported' } }],
+        next: 'complete',
+      },
+    ],
+    rewards: [{ relationship: { npc: 'sola', delta: 15 } }, { upgrade: { stat: 'oxygenMax', value: 150 } }, { notify: 'Imani re-tunes your suit’s oxygen recycler as thanks: O₂ capacity increased.' }],
+  },
+
   /* ============================ SIDE / CREW ============================ */
   {
     id: 'sq.kit', title: 'Broken Wings', kind: 'crew', giver: 'novak',

@@ -50,7 +50,7 @@ export class SuitSystem {
     // Suit power
     let powerRate = pressurized ? 4 : -0.08;
     if (this.headlamp) powerRate -= 0.05;
-    if (temp < -150) {
+    if (temp < loc.coldLimit) {
       powerRate -= 0.9; // heaters working hard
       hazard = 'EXTREME COLD';
     } else if (temp > 100) {

@@ -637,6 +637,81 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
     kind: 'seat',
   });
 
+  // --- Engineering upgrade console: Kestrel fusion torch and thermal shield (post-launch)
+  console_(
+    'upgrades',
+    mount(-11.36, D3 + 1.5, 41, Math.PI / 2),
+    {
+      title: 'Drive & hull upgrades',
+      width: 1.3,
+      height: 0.8,
+      tick: 0.5,
+      screen: {
+        x: 0.18, y: 0.12, w: 0.8, h: 0.44, px: [620, 340],
+        draw: (ctx, w, h) => {
+          ScreenUI.bg(ctx, w, h, '#0b0716');
+          ScreenUI.title(ctx, 'Upgrades', 18, 36, '#c77dff');
+          const f = sys('prop.fusion');
+          ScreenUI.status(ctx, 18, 80, step('prop.fusion', 'core') ? 'Fusion core: seated' : `Fusion core: ${store.count('fusioncore') ? 'ready to install' : 'not aboard'}`, step('prop.fusion', 'core') ? 'ok' : store.count('fusioncore') ? 'warn' : 'off');
+          ScreenUI.status(ctx, 18, 115, step('prop.fusion', 'coils') ? 'Nozzle coils: installed' : `Nozzle coils: ${store.count('magcoil')}/2 aboard`, step('prop.fusion', 'coils') ? 'ok' : store.count('magcoil') >= 2 ? 'warn' : 'off');
+          ScreenUI.status(ctx, 18, 150, f?.online ? 'KESTREL TORCH ONLINE' : step('prop.fusion', 'tune') ? 'Tuned — awaiting ignition' : 'Confinement untuned', f?.online ? 'ok' : 'off');
+          ScreenUI.status(ctx, 18, 200, online('hull.thermal') ? 'Thermal shield: FITTED' : `Thermal tiles: ${store.count('thermaltile')}/6 aboard`, online('hull.thermal') ? 'ok' : store.count('thermaltile') >= 6 ? 'warn' : 'off');
+          ScreenUI.text(ctx, f?.online ? 'Outer planets in range · tanks +2,000 kg' : 'Upgrades from Ceres Deep; tiles from the fabricator', 18, h - 20, '#9aa8b4', 15);
+        },
+      },
+      controls: [
+        {
+          id: 'core', kind: 'slot', x: -0.45, y: 0.2, color: '#ff7ae0',
+          label: () => (step('prop.fusion', 'core') ? 'Fusion core seated' : 'Seat the Kestrel fusion core'),
+          enabled: () => !step('prop.fusion', 'core') && store.count('fusioncore') > 0,
+          state: () => step('prop.fusion', 'core'),
+          onClick: () => game.repairStep('prop.fusion', 'core', null),
+        },
+        {
+          id: 'coils', kind: 'slot', x: -0.45, y: 0.02, color: '#c77dff',
+          label: () => (step('prop.fusion', 'coils') ? 'Coils installed' : `Install nozzle coils (${store.count('magcoil')}/2)`),
+          enabled: () => step('prop.fusion', 'core') && !step('prop.fusion', 'coils') && store.count('magcoil') >= 2,
+          state: () => step('prop.fusion', 'coils'),
+          onClick: () => game.repairStep('prop.fusion', 'coils', null),
+        },
+        {
+          id: 'tune', kind: 'key', x: -0.45, y: -0.18, color: '#3ee08f',
+          label: () => (online('prop.fusion') ? 'Torch online' : 'TUNE & IGNITE'),
+          enabled: () => step('prop.fusion', 'core') && step('prop.fusion', 'coils') && !online('prop.fusion'),
+          onClick: () => {
+            game.repairStep('prop.fusion', 'tune', 'prop.fusion');
+            if (online('prop.fusion')) store.apply([{ story: 'fusion.online' }]);
+          },
+        },
+        {
+          id: 'tiles', kind: 'slot', x: 0.2, y: -0.27, color: '#f0e6d2',
+          label: () => (online('hull.thermal') ? 'Thermal shield fitted' : `Fit thermal tiles (${store.count('thermaltile')}/6)`),
+          enabled: () => !online('hull.thermal') && store.count('thermaltile') >= 6,
+          state: () => online('hull.thermal'),
+          onClick: () => game.repairStep('hull.thermal', 'tiles', 'hull.thermal'),
+        },
+      ],
+    },
+    () => (st().flags.launched ? 'Drive & hull upgrades' : null),
+    () => !!st().flags.launched,
+  );
+
+  // --- Onboard propellant still (cargo hold): ice → hydrolox anywhere, so the ship is never stranded
+  simple('cargo.isru', hotspot(13.6, D3 + 0.9, 40.5, 1.2, 1.8, 1.6, true, '#7fd3ff'), () => `Onboard propellant still — feed ice (${store.count('ice')} carried)`, () => {
+    const n = store.count('ice');
+    if (n <= 0) {
+      game.audio.play('error');
+      pushNotification('You are not carrying any ice. Every world out here has some — mine it.', 'warn');
+      return;
+    }
+    store.batch('isru', () => {
+      store.take('ice', n);
+      store.setPropellant(st().ship.propellant + n * 20);
+    });
+    game.audio.play('mine');
+    pushNotification(`Electrolysed ${n} ice → ${n * 20} kg propellant (${Math.round(st().ship.propellant)} kg aboard).`, 'info');
+  }, { available: () => !!st().flags.launched, detail: () => `${Math.round(st().ship.propellant)} kg aboard · 20 kg per ice` });
+
   // --- Commander's holo table: the star map
   const tableRoot = new THREE.Group();
   tableRoot.position.set(0, 0.98, -28.4);

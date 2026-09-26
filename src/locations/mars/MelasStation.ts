@@ -7,7 +7,7 @@ import { InteriorBuilder, type RoomDef } from '../lantern/interiorKit';
 import { CrewRuntime, type Spot } from '../../gameplay/crew';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
 import { ConsolePanel } from '../../interaction/ConsolePanel';
-import { PROPELLANT_CAPACITY } from '../../content/shipSystems';
+import { propellantCapacity } from '../../content/shipSystems';
 import { Rng } from '../../engine/Rng';
 import { pushNotification } from '../../ui/uiState';
 
@@ -205,7 +205,7 @@ export class MelasStation extends Location {
         if (!this.powered) return 'Unpowered';
         const p = store.state.ship.parking;
         if (p.kind !== 'surface' || p.locationId !== 'mars.melas') return 'The Lantern is not on the pad';
-        return `Lantern tanks ${Math.round(store.state.ship.propellant)} / ${PROPELLANT_CAPACITY} kg`;
+        return `Lantern tanks ${Math.round(store.state.ship.propellant)} / ${propellantCapacity(store.state)} kg`;
       },
       interact: () => {
         const p = store.state.ship.parking;
@@ -213,9 +213,9 @@ export class MelasStation extends Location {
           game.audio.play('error');
           return;
         }
-        store.setPropellant(PROPELLANT_CAPACITY);
+        store.setPropellant(propellantCapacity(store.state));
         game.audio.play('confirm');
-        pushNotification(`Tanks topped up from Melas ice: ${PROPELLANT_CAPACITY} kg.`, 'info');
+        pushNotification(`Tanks topped up from Melas ice: ${propellantCapacity(store.state)} kg.`, 'info');
       },
     });
 

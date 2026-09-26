@@ -14,11 +14,82 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.okonkwo',
     npc: 'okonkwo',
     entries: [
+      { if: { all: [{ flag: 'archive.mem1' }, { flag: 'archive.mem2' }, { flag: 'archive.mem3' }, { notFlag: 'game.complete' }] }, node: 'finale' },
+      { if: { all: [{ discovered: 'pluto.sputnik' }, { notFlag: 'okonkwo.found' }] }, node: 'pluto' },
+      { if: { flag: 'game.complete' }, node: 'after' },
+      { if: { questActive: 'mq.truth' }, node: 'archive' },
+      { if: { discovered: 'vesper.terminator' }, node: 'vesper' },
+      { if: { questActive: 'mq.threshold' }, node: 'threshold' },
+
       { if: { all: [PRE, { notFlag: 'prologue.cmdr' }] }, node: 'brief' },
       { if: { all: [PRE, { quest: 'mq.prologue', stage: 'approach' }] }, node: 'approach' },
       { if: PRE, node: 'idle' },
     ],
     nodes: {
+      pluto: {
+        id: 'pluto', speaker: 'okonkwo',
+        text: 'You came. Of course you came. I chose you because you would. …Hello. Don’t hug me yet — I’ve been standing on nitrogen ice for, I think, about four minutes, and also for eleven weeks.',
+        choices: [
+          { text: 'Commander. You lied to all of us.', to: 'lied' },
+          { text: 'We came to take you home.', to: 'home' },
+        ],
+      },
+      lied: {
+        id: 'lied', speaker: 'okonkwo',
+        text: 'Yes. For two years. Project Lighthouse: the Directorate heard the Cadence three decades ago and handed it to me, and I answered it, from Harbor, alone. I thought if anything came, it would come for me and leave you alone. It didn’t understand “alone”.',
+        effects: [{ relationship: { npc: 'okonkwo', delta: -5 } }],
+        next: 'what',
+      },
+      home: {
+        id: 'home', speaker: 'okonkwo',
+        text: 'Home. …Yes. Eventually. I owe every one of you the truth, and I’ll pay it. But not yet — the thing I answered is still calling, and it will only open for a ship that carries what the Moon gave you.',
+        effects: [{ relationship: { npc: 'okonkwo', delta: 10 } }],
+        next: 'what',
+      },
+      what: {
+        id: 'what', speaker: 'okonkwo',
+        text: 'The Blackglass isn’t a weapon. It’s a courier, and the nodes are its roads. Beyond Pluto — fifty-one AU — is where the roads begin: a gate. The Cadence is its voice. The key is this.',
+        choices: [{ text: '(Take what she holds out)', to: 'key' }],
+      },
+      key: {
+        id: 'key', speaker: 'okonkwo',
+        text: 'The fragment from your lab — the node grew around it while I waited. A key. Put it in your pocket and the gate will know us. Now: take me to my ship, Specialist. I would very much like to sit in my own chair.',
+        effects: [
+          { setFlag: 'okonkwo.found' }, { give: 'latticekey', qty: 1 },
+          { notify: 'Commander Okonkwo rejoins the crew. The Threshold appears on the star map.' },
+          { relationship: { npc: 'okonkwo', delta: 10 } },
+        ],
+        next: 'end',
+      },
+      threshold: { id: 'threshold', speaker: 'okonkwo', text: 'Fifty-one AU. Plot it on my table — it’s on the map now. And thank you for not letting Kit repaint my chair.', next: 'end' },
+      vesper: { id: 'vesper', speaker: 'okonkwo', text: 'The Archive is south-west of the landing zone, past the ruins. Keep your lamp on near it. The things in the shadows there are frightened of light, and so am I, a little.', next: 'end' },
+      archive: { id: 'archive', speaker: 'okonkwo', text: 'Three memories: the west alcove, the east, and the end of the nave. Touch them. Then come to the Heart. We’ll all be there.', next: 'end' },
+      finale: {
+        id: 'finale', speaker: 'okonkwo',
+        text: 'So now you know what I know. The Lattice is a lighthouse and a road. The Archive will do one of three things for us, and it will not choose. I answered the first call without asking any of you. I won’t make that mistake twice. You choose.',
+        choices: [
+          { text: 'Open the Lattice. Let humanity walk the road.', to: 'open' },
+          { text: 'Close it. Take us home the long way, and let it sleep.', to: 'close' },
+          { text: 'Open the far door. We follow the Builders.', to: 'beyond' },
+          { text: 'I need a moment.', to: 'end' },
+        ],
+      },
+      open: {
+        id: 'open', speaker: 'okonkwo', text: 'Then let’s leave the light on. For everyone.',
+        effects: [{ setFlag: 'ending.chosen', value: 'open' }, { setFlag: 'game.complete' }, { setFlag: 'earth.quarantine.lifted' }, { story: 'ending.open' }],
+        next: 'end',
+      },
+      close: {
+        id: 'close', speaker: 'okonkwo', text: 'Then we go home. And one day, when we’re ready, somebody will knock again.',
+        effects: [{ setFlag: 'ending.chosen', value: 'close' }, { setFlag: 'game.complete' }, { setFlag: 'earth.quarantine.lifted' }, { story: 'ending.close' }],
+        next: 'end',
+      },
+      beyond: {
+        id: 'beyond', speaker: 'okonkwo', text: 'Further, then. I was hoping you’d say that.',
+        effects: [{ setFlag: 'ending.chosen', value: 'beyond' }, { setFlag: 'game.complete' }, { setFlag: 'earth.quarantine.lifted' }, { story: 'ending.beyond' }],
+        next: 'end',
+      },
+      after: { id: 'after', speaker: 'okonkwo', text: 'Whatever we chose, it was ours. Go on — the whole Solar System is on the map now, and I’d like to see it with you.', next: 'end' },
       brief: {
         id: 'brief', speaker: 'okonkwo',
         text: '{player}. Good, you’re up. Six hours to Harbor Station. After we undock, the next time any of us sees the Moon this close will be on the way home — four years from now.',
@@ -60,6 +131,9 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.arakawa',
     npc: 'arakawa',
     entries: [
+      { if: { discovered: 'threshold.zone' }, node: 'thresh' },
+      { if: { system: 'prop.fusion' }, node: 'fast' },
+
       { if: PRE, node: 'act0' },
       { if: { flag: 'launched' }, node: 'space' },
       { if: { all: [{ questActive: 'mq.ascent' }, { notFlag: 'ascent.crewReady' }] }, node: 'ascent' },
@@ -68,6 +142,8 @@ export const DIALOGUES: DialogueDef[] = [
       { if: { flag: 'kit.treated' }, node: 'recover' },
     ],
     nodes: {
+      thresh: { id: 'thresh', speaker: 'arakawa', text: 'I flew through a door the size of a city into a star system nobody’s ever seen. My flight instructor said I’d never amount to anything. I want her to know.', next: 'end' },
+      fast: { id: 'fast', speaker: 'arakawa', text: 'With the torch, the outer planets are a long nap away. Plot it on the holo table, and I’ll keep her pointy end forward.', next: 'end' },
       act0: {
         id: 'act0', speaker: 'arakawa',
         text: 'Hey, EVA. Coast phase is the boring part — the Moon just gets bigger. Want to see something good?',
@@ -143,6 +219,9 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.castellanos',
     npc: 'castellanos',
     entries: [
+      { if: { all: [{ flag: 'ceres.hangar' }, { not: { system: 'prop.fusion' } }] }, node: 'install' },
+      { if: { system: 'prop.fusion' }, node: 'torch' },
+
       { if: PRE, node: 'act0' },
       { if: { notFlag: 'met.castellanos' }, node: 'first' },
       { if: { questActive: 'mq.aftermath' }, node: 'power' },
@@ -155,6 +234,12 @@ export const DIALOGUES: DialogueDef[] = [
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      install: {
+        id: 'install', speaker: 'castellanos',
+        text: 'You brought me a fusion torch. You brought me a *fusion torch*. Engineering, Deck 3, west wall — I’ve set up an upgrade console. Seat the core, install both coils, tune and ignite. The thermal tiles go on from the same console if you want the inner planets.',
+        next: 'end',
+      },
+      torch: { id: 'torch', speaker: 'castellanos', text: 'She’s never flown like this. Neither have I. If you need propellant, feed ice to the still in the cargo hold — every world out here has some.', next: 'end' },
       act0: {
         id: 'act0', speaker: 'castellanos',
         text: 'Diagnostic’s queued on the console — go ahead, you know which button. She’s purring. Sixty percent on the reactor, radiators happy. I love this ship more than I love most people.',
@@ -262,6 +347,10 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.sola',
     npc: 'sola',
     entries: [
+      { if: { all: [{ scanned: 'db.oldspire' }, { notFlag: 'oldspire.reported' }] }, node: 'oldspire' },
+      { if: { questActive: 'mq.cadence' }, node: 'outer' },
+      { if: { discovered: 'vesper.terminator' }, node: 'life' },
+
       { if: { all: [PRE, { notFlag: 'prologue.lab' }] }, node: 'act0' },
       { if: PRE, node: 'act0b' },
       { if: { all: [{ flag: 'fragment.analyzed' }, { notFlag: 'fragment.discussed' }] }, node: 'fragment' },
@@ -275,6 +364,22 @@ export const DIALOGUES: DialogueDef[] = [
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      oldspire: {
+        id: 'oldspire', speaker: 'sola',
+        text: 'Mercury’s spire is buried in rock that cooled four billion years ago. Venus’s is older than its lava. They were here before the oceans on Earth. Before anything was alive to hear them. They have been waiting a very long time.',
+        effects: [{ setFlag: 'oldspire.reported' }, { relationship: { npc: 'sola', delta: 5 } }],
+        next: 'end',
+      },
+      outer: {
+        id: 'outer', speaker: 'sola',
+        text: 'Europa has an ocean under its ice; Titan has seas of methane and air thicker than ours; Pluto has glaciers of nitrogen that churn like soup. Every one of them, a place a probe once flew past for a few hours. And we get to walk there.',
+        next: 'end',
+      },
+      life: {
+        id: 'life', speaker: 'sola',
+        text: 'Scan everything. Please. Violet leaves because the light is redder. Stalkers that hate light. Sails that face a sun that never moves. I will be writing papers about this for the rest of my life, and I don’t care if anyone reads them.',
+        next: 'end',
+      },
       spire: {
         id: 'spire', speaker: 'sola',
         text: 'A spire. Of Blackglass. Standing upright on Mars, keeping the same 1,969-second time as the scar on the Moon… and her tracks lead right up to it and stop?',
@@ -353,6 +458,8 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.novak',
     npc: 'novak',
     entries: [
+      { if: { flag: 'okonkwo.found' }, node: 'cmdr' },
+
       { if: { all: [PRE, { notFlag: 'prologue.petra' }] }, node: 'act0' },
       { if: PRE, node: 'act0b' },
       { if: { all: [CRASHED, { notFlag: 'kit.treated' }] }, node: 'kit' },
@@ -362,6 +469,11 @@ export const DIALOGUES: DialogueDef[] = [
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      cmdr: {
+        id: 'cmdr', speaker: 'novak',
+        text: 'I checked her over. Heart rate normal, bloodwork normal, eleven weeks older by her suit clock and not a day older by her cells. Medically, the commander is fine. Philosophically, I have questions.',
+        next: 'end',
+      },
       act0: {
         id: 'act0', speaker: 'novak',
         text: 'There you are. Sit. Blood pressure, pupils, the usual pre-docking ritual… You’re fine. Disgustingly fine. How are you sleeping?',
@@ -407,6 +519,12 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'dlg.haddad',
     npc: 'haddad',
     entries: [
+      { if: { all: [{ questActive: 'mq.network' }, { notFlag: 'network.briefed' }] }, node: 'network' },
+      { if: { questActive: 'mq.network' }, node: 'network2' },
+      { if: { questActive: 'mq.cadence' }, node: 'cadence' },
+      { if: { questActive: 'mq.threshold' }, node: 'thresh' },
+      { if: { discovered: 'vesper.orbit' }, node: 'vesperlines' },
+
       { if: PRE, node: 'act0' },
       { if: { all: [{ flag: 'office.log.read' }, { notFlag: 'office.told' }] }, node: 'office' },
       { if: { all: [{ questActive: 'mq.frontier' }, { notFlag: 'frontier.briefed' }] }, node: 'frontier' },
@@ -417,6 +535,33 @@ export const DIALOGUES: DialogueDef[] = [
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      network: {
+        id: 'network', speaker: 'haddad',
+        text: 'Ines’s burst log. I finally cracked it. It wasn’t a transmission — it was a handshake. A list of addresses, and every one is a place the Blackglass touched: the Moon, Harbor, Melas… and one more we haven’t visited. Ceres. Occator crater.',
+        choices: [
+          { text: 'Can we reach Ceres?', to: 'network.b' },
+          { text: 'And the Cadence’s source?', to: 'network.c' },
+        ],
+      },
+      'network.b': {
+        id: 'network.b', speaker: 'haddad',
+        text: 'Just. Nine hundred kilos for the transfer — fill the tanks first. And here’s the good part: Ceres Deep, the mining station in Occator, has been building a fusion torch. A prototype. With that, the outer planets stop being a lifetime away.',
+        effects: [{ setFlag: 'network.briefed' }],
+        next: 'end',
+      },
+      'network.c': {
+        id: 'network.c', speaker: 'haddad',
+        text: 'Past Neptune. Way past. We will never get there on hydrolox. Which is why Ceres matters twice.',
+        next: 'network.b',
+      },
+      network2: { id: 'network2', speaker: 'haddad', text: 'Ceres Deep — Occator crater. Talk to their quartermaster, Adeyemi. Their comms have been one long sigh since 04:12:07.', next: 'end' },
+      cadence: {
+        id: 'cadence', speaker: 'haddad',
+        text: 'With the torch lit, the Cadence split into three voices — three nodes singing it in turn. Europa, Titan, Pluto. It’s a path. It’s her path. Scan each node and I’ll stitch the lines together.',
+        next: 'end',
+      },
+      thresh: { id: 'thresh', speaker: 'haddad', text: 'The commander on the bridge again. I keep turning around to check. …The Threshold is on the map. Eighty-two years of the same three words, and we’re going to go and knock.', next: 'end' },
+      vesperlines: { id: 'vesperlines', speaker: 'haddad', text: 'I’ve stopped trying to calculate how far from home we are. It makes my handwriting shake.', next: 'end' },
       frontier: {
         id: 'frontier', speaker: 'haddad',
         text: 'Earth Control just relayed something. Melas Station — the science outpost in Valles Marineris, on Mars — went dark at 04:12:07. The same second the Blackglass hit Harbor. Two hundred million kilometres apart.',
@@ -666,6 +811,81 @@ DIALOGUES.push(
   },
 );
 
+/* ------------------------------ Ceres, Venus ------------------------------ */
+DIALOGUES.push(
+  {
+    id: 'dlg.adeyemi',
+    npc: 'adeyemi',
+    entries: [
+      { if: { notFlag: 'ceres.met' }, node: 'meet' },
+      { if: { flag: 'ceres.hangar' }, node: 'thanks' },
+      { if: { always: true }, node: 'pylons' },
+    ],
+    nodes: {
+      meet: {
+        id: 'meet', speaker: 'adeyemi',
+        text: 'A crewed ship. Out here. You’ll forgive me if I check you’re not a drone. …You’re not. Welcome to Ceres Deep. We have coffee, water, and a problem.',
+        choices: [{ text: 'What happened here?', to: 'what' }],
+      },
+      what: {
+        id: 'what', speaker: 'adeyemi',
+        text: '04:12:07. Every drone we own stopped mid-task, went home, and engaged a quarantine protocol on the prototype hangar. Nobody told them to. When Mei-Ling tried to override it, they blocked the hatch with their bodies.',
+        choices: [
+          { text: 'How do we break the lock?', to: 'how' },
+          { text: 'What’s in the hangar?', to: 'kestrel' },
+        ],
+      },
+      kestrel: { id: 'kestrel', speaker: 'adeyemi', text: 'The Kestrel. A fusion torch. Mei-Ling’s life’s work. I suspect you want it. I suspect I’ll let you have it, if you can get it out.', next: 'how' },
+      how: {
+        id: 'how', speaker: 'adeyemi',
+        text: 'The protocol needs a quorum from three drone relays out on the salt — west, south-east, east. Weld a bypass into each pylon and it loses its vote. I’d do it myself but they watch me. They don’t know you. The refuel line on the east wall is yours, by the way.',
+        effects: [{ setFlag: 'ceres.met' }, { relationship: { npc: 'adeyemi', delta: 10 } }],
+        next: 'end',
+      },
+      pylons: { id: 'pylons', speaker: 'adeyemi', text: 'Three pylons: west, south-east, east. Then the hangar hatch north of the dome. Mind the seed on the bright dome — it’s been pinging since the drones went quiet.', next: 'end' },
+      thanks: { id: 'thanks', speaker: 'adeyemi', text: 'The drones are asleep and the hangar’s open. Ceres Deep owes you one. Several. Come back and I’ll keep the coffee hot.', effects: [{ relationship: { npc: 'adeyemi', delta: 5 } }], next: 'end' },
+    },
+  },
+  {
+    id: 'dlg.zhou',
+    npc: 'zhou',
+    entries: [
+      { if: { system: 'prop.fusion' }, node: 'lit' },
+      { if: { flag: 'ceres.hangar' }, node: 'install' },
+      { if: { always: true }, node: 'hi' },
+    ],
+    nodes: {
+      hi: {
+        id: 'hi', speaker: 'zhou',
+        text: 'Deuterium–helium-3, magnetic nozzle, specific impulse you would not believe. It is sitting in a hangar behind a door guarded by my own drones, which is humiliating. Get it out and it’s yours. I only ask that you fly it somewhere worth the trouble.',
+        next: 'end',
+      },
+      install: {
+        id: 'install', speaker: 'zhou',
+        text: 'Core first, then both coils, then tune the confinement before ignition — never the other way round. Your engineer will know. I packed thermal tiles in the cradle too, in case you want to visit the Sun. People always want to visit the Sun.',
+        next: 'end',
+      },
+      lit: { id: 'lit', speaker: 'zhou', text: 'I felt it light from here. Don’t redline it past Jupiter. …Actually, do. Tell me what happens.', effects: [{ relationship: { npc: 'zhou', delta: 5 } }], next: 'end' },
+    },
+  },
+  {
+    id: 'dlg.ferreira',
+    npc: 'ferreira',
+    entries: [{ if: { always: true }, node: 'hi' }],
+    nodes: {
+      hi: {
+        id: 'hi', speaker: 'ferreira',
+        text: 'Welcome to Halcyon: Earth pressure, Earth temperature, and the finest view in the Solar System, provided you like the colour yellow. Our deep radar found something under the clouds. The survey terminal is behind me — look at survey 88.',
+        choices: [
+          { text: 'Why live above Venus?', to: 'why' },
+          { text: 'I’ll look.', to: 'end' },
+        ],
+      },
+      why: { id: 'why', speaker: 'ferreira', text: 'Fifty kilometres up, the air outside is at one bar and thirty degrees. Breathable air is a lifting gas here, so the whole city floats. It’s the most Earth-like place off Earth — you just can’t go outside without an acid suit.', next: 'end' },
+    },
+  },
+);
+
 /** Ambient crew lines and banter. Conditions keep them truthful to the current state. */
 export const BARKS: BarkDef[] = [
   { id: 'b.kit.coast', npc: 'arakawa', text: 'Harbor approach in… a while. Moon’s getting big.', if: PRE, reply: { npc: 'okonkwo', text: 'Eyes on your instruments, Mr Arakawa.' } },
@@ -684,5 +904,10 @@ export const BARKS: BarkDef[] = [
   { id: 'b.kit.mars', npc: 'arakawa', text: 'Landed on Mars on a ship that crashed on the Moon. Put that on my résumé.', if: { discovered: 'mars.melas' }, once: true, reply: { npc: 'castellanos', text: 'Put “crashed” in small print.' } },
   { id: 'b.rafi.quarantine', npc: 'haddad', text: 'Earth won’t take us back until they know what the Blackglass is. Fair. Awful, but fair.', if: { questActive: 'mq.frontier' }, once: true },
   { id: 'b.petra.transit', npc: 'novak', text: 'Seven months compressed into ninety seconds and I still feel it in my knees.', if: { discovered: 'mars.orbit' }, once: true },
+  { id: 'b.mira.torch', npc: 'castellanos', text: 'Every time the torch spools up I hear Zhou saying “never the other way round”.', if: { system: 'prop.fusion' }, once: true },
+  { id: 'b.kit.europa', npc: 'arakawa', text: 'Jupiter filling the whole window. Somebody pinch me. Not the ribs.', if: { discovered: 'europa.orbit' }, once: true },
+  { id: 'b.imani.titan', npc: 'sola', text: 'It rained on me on Titan. Methane rain. I’m putting that on my headstone.', if: { discovered: 'titan.kraken' }, once: true },
+  { id: 'b.rafi.cmdr', npc: 'haddad', text: 'The commander asked me for a coffee. Like nothing happened. I made her one. Like nothing happened.', if: { flag: 'okonkwo.found' }, once: true, reply: { npc: 'okonkwo', text: 'It was very good coffee, Rafi.' } },
+  { id: 'b.petra.vesper', npc: 'novak', text: 'I keep taking deep breaths of Vesper air in the airlock. Don’t tell anyone.', if: { discovered: 'vesper.terminator' }, once: true },
   { id: 'b.petra.garden', npc: 'novak', text: 'The tomato has a flower. Don’t tell anyone. I don’t want to jinx it.', if: { module: 'greenhouse' }, location: 'moon.south', once: true },
 ];

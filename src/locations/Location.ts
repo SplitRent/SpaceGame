@@ -79,6 +79,8 @@ export abstract class Location {
   bounds = new THREE.Box3(new THREE.Vector3(-1e4, -200, -1e4), new THREE.Vector3(1e4, 5000, 1e4));
   /** Minimum Y before the player is considered fallen out of the world. */
   killY = -200;
+  /** Ambient temperature below which suit heaters strain (outer-system liners lower it). */
+  coldLimit = -150;
 
   constructor(protected game: Game, gravity: number) {
     this.scope = game.scope.child(`location`);

@@ -5,6 +5,7 @@ import { ZONES, zoneForStation } from '../content/zones';
 import { LOCATION_REGISTRY } from '../locations/registry';
 import { lookQuat } from '../engine/math';
 import { pushNotification } from '../ui/uiState';
+import { BODIES } from '../content/bodies';
 
 export interface EntryStatus {
   ok: boolean;
@@ -33,6 +34,18 @@ export class TravelSystem {
     return ZONES[p.to]?.body ?? null;
   }
 
+  /** Star system the ship is in ('sol' or 'vesper'). */
+  currentSystem(): 'sol' | 'vesper' {
+    const b = this.currentBody();
+    return (b && BODIES.find((x) => x.id === b)?.system) || 'sol';
+  }
+
+  /** Entries drawn on the map right now (same system, discovered). */
+  visibleEntries(): StarMapEntry[] {
+    const sys = this.currentSystem();
+    return STARMAP.filter((e) => ((BODIES.find((b) => b.id === e.body)?.system ?? 'sol') === sys) && (!e.hiddenUnless || this.game.store.check(e.hiddenUnless)));
+  }
+
   entry(body: string): StarMapEntry | undefined {
     return STARMAP.find((e) => e.body === body);
   }
@@ -42,6 +55,8 @@ export class TravelSystem {
     const s = store.state;
     const p = s.ship.parking;
     const here = this.currentBody() === e.body && p.kind !== 'transit';
+    const sys = BODIES.find((b) => b.id === e.body)?.system ?? 'sol';
+    if (sys !== this.currentSystem()) return { ok: false, reason: 'In another star system. The way back is through the gate.', locked: true, here };
     const lock = e.locks.find((l) => !store.check(l.unless));
     if (lock) return { ok: false, reason: lock.reason, locked: true, here };
     if (!e.zone) return { ok: false, reason: 'Not a destination yet.', locked: true, here };
@@ -64,7 +79,7 @@ export class TravelSystem {
     if (p.kind !== 'space') return false;
     store.batch('plot', () => {
       store.setPropellant(store.state.ship.propellant - e.cost);
-      store.state.ship.parking = { kind: 'transit', locationId: 'space.transit', from: p.locationId, to: e.zone!, elapsed: 0, duration: TRANSIT_SECONDS };
+      store.state.ship.parking = { kind: 'transit', locationId: 'space.transit', from: p.locationId, to: e.zone!, elapsed: 0, duration: e.seconds ?? TRANSIT_SECONDS };
       store.setFlag(`course.${body}`, true);
       store.markChanged('plot');
     });

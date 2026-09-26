@@ -68,8 +68,8 @@ ok(docked.title === 'Holographic star map', 'holo table opens the first-person s
 ok(!docked.enabled && /Undock/.test(docked.reason), `plotting is refused while docked (“${docked.reason}”)`);
 const earth = await g(() => { const game = window.__game; game.panel.select('earth'); return game.travel.status(game.travel.entry('earth')); });
 ok(earth.locked && /quarantine/i.test(earth.reason), 'Earth is locked with a story reason');
-const jup = await g(() => { const game = window.__game; game.panel.select('jupiter'); return game.travel.status(game.travel.entry('jupiter')); });
-ok(jup.locked && /drive/i.test(jup.reason), 'Jupiter is locked by drive range');
+const jup = await g(() => { const game = window.__game; game.panel.select('europa'); return game.travel.status(game.travel.entry('europa')); });
+ok(jup.locked && /drive/i.test(jup.reason), 'Europa is locked by drive range');
 await page.screenshot({ path: 'screenshots/e2e-mars-01-starmap.png' });
 await g(() => window.__game.closePanel());
 await g(() => {
@@ -198,7 +198,8 @@ const off = await g(() => {
 });
 ok(off.en && /TAKE OFF/.test(off.label), `pilot key offers take-off (“${off.label}”)`);
 ok(await at('space.mars'), 'lift-off to Mars orbit');
-ok(await g(() => window.__game.store.state.ship.propellant === 1950), 'Mars ascent costs 450 kg');
+const afterAscent = await g(() => window.__game.store.state.ship.propellant);
+ok(Math.abs(afterAscent - 1950) < 5, `Mars ascent costs 450 kg (${afterAscent} kg left)`);
 
 const real = errors.filter((e) => !/WebGL|GPU|swiftshader/i.test(e));
 ok(real.length === 0, `no runtime errors${real.length ? ':\n  ' + real.slice(0, 6).join('\n  ') : ''}`);

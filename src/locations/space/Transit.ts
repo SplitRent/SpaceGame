@@ -55,8 +55,8 @@ export class Transit extends Location {
     this.scene.add(this.sky.group);
     this.scope.add(() => this.sky.dispose());
     if (p.kind === 'transit') {
-      const fromKind = (ZONES[p.from]?.planet.kind ?? 'moon') as PlanetKind;
-      const toKind = (ZONES[p.to]?.planet.kind ?? 'mars') as PlanetKind;
+      const fromKind = (ZONES[p.from]?.planet?.kind ?? 'pluto') as PlanetKind;
+      const toKind = (ZONES[p.to]?.planet?.kind ?? 'charon') as PlanetKind;
       this.from = createPlanet(fromKind, 100, { segments: 64 });
       this.to = createPlanet(toKind, 100, { segments: 96 });
       this.scene.add(this.from.group, this.to.group);

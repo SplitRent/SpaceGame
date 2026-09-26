@@ -140,4 +140,41 @@ export const ITEMS: ItemDef[] = [
     id: 'keycard', name: 'Kepler-9 Access Card', category: 'quest', stack: 1, color: '#00cec9', glyph: 'K9',
     description: 'Maintenance access card, still clipped to an abandoned suit.',
   },
+  // ---------------- Act 2–5 ----------------
+  {
+    id: 'salts', name: 'Faculae Salts', category: 'resource', stack: 30, color: '#f4f1e6', glyph: 'Na',
+    description: 'Bright sodium carbonate crust from Occator crater. A chemical feedstock and a record of Ceres’s buried brine.',
+    science: 'Occator’s bright spots are salts left behind when briny water from below reached the surface and sublimated away (Dawn mission).',
+    value: 4,
+  },
+  {
+    id: 'organics', name: 'Tholin Organics', category: 'resource', stack: 30, color: '#b0662a', glyph: 'Th',
+    description: 'Complex organic molecules from Titan’s dunes and Pluto’s red plains. Refined into carbon feedstock.',
+    science: 'Tholins form when ultraviolet light and charged particles break apart methane and nitrogen; they give Titan and Pluto their orange-red tints.',
+    value: 5,
+  },
+  {
+    id: 'biosample', name: 'Vesper Biosample', category: 'resource', stack: 20, color: '#7a2a6a', glyph: 'Bi',
+    description: 'Tissue from Vesper b’s violet flora. Carbon-based, with a chirality ours does not share.',
+    science: 'Life under a cooler, redder star may favour dark pigments that absorb more of the available light.',
+    value: 8,
+  },
+  {
+    id: 'magcoil', name: 'Magnetic Nozzle Coil', category: 'component', stack: 4, color: '#c77dff', glyph: 'Mc',
+    description: 'Superconducting coil that shapes a fusion plasma into thrust. The Kestrel torch needs two.',
+    value: 40,
+  },
+  {
+    id: 'thermaltile', name: 'Thermal Tile', category: 'component', stack: 12, color: '#f0e6d2', glyph: 'Tt',
+    description: 'Ceramic tile for the sunward hull. Six of them let the Lantern fly the inner Solar System.',
+    value: 15,
+  },
+  {
+    id: 'fusioncore', name: 'Kestrel Fusion Core', category: 'quest', stack: 1, color: '#ff7ae0', glyph: 'Fx',
+    description: 'The heart of Ceres Deep’s prototype D-He3 torch. Heavier than it looks, humming faintly.',
+  },
+  {
+    id: 'latticekey', name: 'Lattice Key', category: 'quest', stack: 1, color: '#7a5cff', glyph: '⟁',
+    description: 'A Blackglass shard grown around the Moon fragment, carried by the commander from Pluto. It is warm.',
+  },
 ];

@@ -171,3 +171,21 @@ select, input[type=text] { background: #0e1822; color: var(--text); border: 1px 
 .marker.sel { color: var(--amber); }
 .marker.sel .diamond { font-size: 24px; }
 .marker.behind { opacity: 0.45; }
+
+/* Reader (logs, recordings, carvings) */
+.reader { max-width: 620px; font-size: 15px; line-height: 1.6; color: #d8e4ea; white-space: pre-wrap; }
+.reader p { margin: 0 0 12px; }
+
+/* Ending sequence */
+.ending { position: fixed; inset: 0; background: radial-gradient(ellipse at center, rgba(8,10,20,0.92), #000 80%); color: #e6ecf2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6vh 12vw; overflow: auto; text-align: center; }
+.ending-title { font-size: clamp(28px, 5vw, 56px); letter-spacing: 0.3em; font-weight: 300; }
+.ending-sub { color: #ffb347; letter-spacing: 0.2em; margin: 8px 0 28px; font-size: 13px; text-transform: uppercase; }
+.ending p { max-width: 720px; font-size: 17px; line-height: 1.7; opacity: 0.55; margin: 0 0 14px; transition: opacity 1.5s; }
+.ending p.fresh { opacity: 1; animation: endFade 2.5s ease; }
+@keyframes endFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ending .credits { display: grid; gap: 8px; margin: 10px 0 20px; animation: endFade 2s ease; }
+.ending .credits div { display: flex; gap: 18px; justify-content: center; font-size: 15px; }
+.ending .credits span { color: #7d8a96; min-width: 200px; text-align: right; }
+.ending .credits b { font-weight: 400; min-width: 200px; text-align: left; }
+.ending-actions { margin-top: 24px; }
+.ending-actions button { background: transparent; border: 1px solid #ffb347; color: #ffb347; padding: 10px 26px; letter-spacing: 0.15em; cursor: pointer; }

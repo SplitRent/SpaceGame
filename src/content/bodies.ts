@@ -108,4 +108,22 @@ export const BODIES: CelestialBodyDef[] = [
     atmosphere: 'None', playMode: 'landable', visual: 'Grey ice with a dark reddish north polar cap (Mordor Macula).',
     facts: ['So large relative to Pluto that they orbit a point in space between them.'],
   },
+  {
+    id: 'threshold', name: 'The Threshold', kind: 'structure', radiusKm: 0.97, gravity: 0, orbit: 51.2, axialTiltDeg: 0, rotationHours: 0,
+    atmosphere: 'None', playMode: 'stationHost',
+    visual: 'A ring of lightless black material 1.8 km across, spokes to a faceted hub, violet seams that pulse every 1,969 seconds.',
+    facts: ['Source of the Cadence.', 'Not made by anyone from Earth.'],
+  },
+  {
+    id: 'vesper', name: 'Vesper', kind: 'star', system: 'vesper', radiusKm: 520000, gravity: 190, orbit: 0, axialTiltDeg: 0, rotationHours: 900,
+    atmosphere: 'Plasma', playMode: 'backdrop',
+    visual: 'An orange K-dwarf, cooler and dimmer than the Sun; light the colour of late afternoon.',
+    facts: ['K-type main-sequence star, ~4,600 K.', 'Lives for tens of billions of years — longer than the Sun.'],
+  },
+  {
+    id: 'vesperb', name: 'Vesper b', kind: 'planet', system: 'vesper', radiusKm: 6250, gravity: 9.2, orbit: 0.29, axialTiltDeg: 0, rotationHours: 0,
+    atmosphere: '0.9 bar N₂/O₂ with 0.4% CO₂ — breathable', playMode: 'landable',
+    visual: 'Tidally locked: a scorched dayside desert, a frozen nightside, and between them a ring of twilight — violet-leaved life, lakes, cloud.',
+    facts: ['One face always toward its star; the Sun never moves in its sky.', 'Life lives in the terminator, the band of permanent dusk.', 'Its oxygen is made by life. We are not alone.'],
+  },
 ];

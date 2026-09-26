@@ -7,7 +7,8 @@ import { PLAYER_INV } from '../state/Store';
 import { SLOT_IDS, type SaveSummary, parseSaveFile, buildSaveFile } from '../save/SaveManager';
 import { LOCATION_REGISTRY } from '../locations/registry';
 import { countItem } from '../gameplay/inventory';
-import { LAUNCH_PROPELLANT } from '../content/shipSystems';
+import { LAUNCH_PROPELLANT, propellantCapacity } from '../content/shipSystems';
+import { ENDINGS, CREDITS, endingParagraphs } from '../content/endings';
 
 function useRev(): number {
   return ui.revision.value;
@@ -562,13 +563,13 @@ function ShipStatus() {
           <span class="k">Battery</span><span>{r.batteryKWh.toFixed(1)} / {r.capacityKWh} kWh</span>
           <span class="k">Status</span><span style={{ color: r.powered ? 'var(--ok)' : 'var(--danger)' }}>{r.powered ? 'POWERED' : 'NO POWER'}</span>
           <span class="k">Ice hopper</span><span>{(s.flags['iceproc.hopper'] as number) ?? 0} units</span>
-          <span class="k">Propellant made</span><span>{Math.round(s.ship.propellant)} / {LAUNCH_PROPELLANT} kg for lunar ascent</span>
+          <span class="k">Propellant made</span><span>{Math.round(s.ship.propellant)} / {s.flags.launched ? propellantCapacity(s) : LAUNCH_PROPELLANT} kg{s.flags.launched ? '' : ' for lunar ascent'}</span>
         </div>
       </Panel>
     );
   }
   return (
-    <Panel title="EXV Lantern — systems" sub={`Hull ${(s.ship.hull * 100).toFixed(0)}% · List ${s.ship.listDeg.toFixed(0)}° · Propellant ${Math.round(s.ship.propellant)} / ${LAUNCH_PROPELLANT} kg`} wide>
+    <Panel title="EXV Lantern — systems" sub={`Hull ${(s.ship.hull * 100).toFixed(0)}% · List ${s.ship.listDeg.toFixed(0)}° · Propellant ${Math.round(s.ship.propellant)} / ${s.flags.launched ? propellantCapacity(s) : LAUNCH_PROPELLANT} kg`} wide>
       {Object.values(g.store.content.shipSystems).map((d) => {
         const st = s.ship.systems[d.id];
         const ready = g.systemReady(d.id);
@@ -637,6 +638,55 @@ function Death() {
   );
 }
 
+/* ------------------------------- Reader ------------------------------- */
+
+function Reader() {
+  const r = ui.reader.value;
+  if (!r) return null;
+  return (
+    <Panel title={r.title}>
+      <div class="reader">
+        {r.text.split('\n\n').map((p) => <p>{p}</p>)}
+      </div>
+    </Panel>
+  );
+}
+
+/* ------------------------------- Ending ------------------------------- */
+
+function Ending() {
+  const g = game() as Game;
+  const id = ui.ending.value;
+  const def = ENDINGS.find((e) => e.id === id);
+  const paras = def ? endingParagraphs(def, (c) => g.store.check(c)) : [];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (!def) return;
+    const total = paras.length + 1;
+    if (i >= total) return;
+    const t = setTimeout(() => setI((x) => x + 1), i === 0 ? 5000 : 9000);
+    return () => clearTimeout(t);
+  }, [i, id]);
+  if (!def) return null;
+  const credits = i > paras.length;
+  return (
+    <div class="ending">
+      <div class="ending-title">{def.title}</div>
+      <div class="ending-sub">{def.subtitle}</div>
+      {!credits && paras.slice(Math.max(0, i - 3), i).map((p, k, arr) => <p class={k === arr.length - 1 ? 'fresh' : ''}>{p}</p>)}
+      {credits && (
+        <div class="credits">
+          {CREDITS.map(([a, b]) => <div><span>{a}</span><b>{b}</b></div>)}
+        </div>
+      )}
+      <div class="ending-actions">
+        {!credits && <button class="interactive" onClick={() => setI((x) => x + 1)}>Continue ▸</button>}
+        {credits && <button class="interactive" onClick={() => g.finishEnding()}>Keep exploring</button>}
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------- Router ------------------------------- */
 
 export function OverlayRouter() {
@@ -657,6 +707,8 @@ export function OverlayRouter() {
       case 'container': return <ContainerPanel />;
       case 'shipstatus': return <ShipStatus />;
       case 'death': return <Death />;
+      case 'reader': return <Reader />;
+      case 'ending': return <Ending />;
       default: return null;
     }
   })();

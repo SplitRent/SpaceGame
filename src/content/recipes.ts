@@ -30,4 +30,7 @@ export const RECIPES: RecipeDef[] = [
     id: 'r.injector', output: { item: 'injector', qty: 1 }, inputs: [{ item: 'titanium', qty: 2 }, { item: 'circuit', qty: 1 }], facility: ['fabricator'], time: 3,
     requires: { questActive: 'mq.lift' },
   },
+  { id: 'r.magcoil', output: { item: 'magcoil', qty: 1 }, inputs: [{ item: 'titanium', qty: 2 }, { item: 'conduit', qty: 1 }, { item: 'circuit', qty: 1 }], facility: ['fabricator'], time: 4, requires: { any: [{ questActive: 'mq.network' }, { questDone: 'mq.network' }] } },
+  { id: 'r.thermaltile', output: { item: 'thermaltile', qty: 2 }, inputs: [{ item: 'aluminum', qty: 2 }, { item: 'silicon', qty: 2 }, { item: 'salts', qty: 1 }], facility: ['fabricator', 'workbench'], time: 3 },
+  { id: 'r.carbon', output: { item: 'carbon', qty: 2 }, inputs: [{ item: 'organics', qty: 1 }], facility: ['fabricator', 'lab'], time: 2 },
 ];

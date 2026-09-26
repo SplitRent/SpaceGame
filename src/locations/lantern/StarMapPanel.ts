@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { PanelController } from '../../interaction/PanelController';
 import type { Game } from '../../Game';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
-import { STARMAP, TRANSIT_SECONDS } from '../../content/starmap';
+import { TRANSIT_SECONDS } from '../../content/starmap';
 import { BODIES } from '../../content/bodies';
 import { ZONES } from '../../content/zones';
 
 const COLORS: Record<string, string> = {
+  europa: '#e8e0d0', titan: '#e0a040', threshold: '#7a5cff', vesper: '#ffb070', vesperb: '#a07aff',
   mercury: '#b8b0a8', venus: '#f2dfae', earth: '#5aa8ff', moon: '#d8d6d0', mars: '#ff7a4a', ceres: '#a9a39a',
   jupiter: '#e9c9a0', saturn: '#f0dca0', uranus: '#9fe8f0', neptune: '#5a86ff', pluto: '#e6d2b8',
 };
@@ -62,10 +63,13 @@ export class StarMapPanel extends PanelController {
       this.holo.add(l);
     };
 
+    const sol = game.travel.currentSystem() === 'sol';
+    if (sol) {
     // The Sun
     const sun = new THREE.Mesh(geo(new THREE.SphereGeometry(0.03, 16, 12)), additive('#ffd27a', 1));
     this.holo.add(sun);
     this.controls.push({ id: 'sun', object: sun, label: () => 'The Sun', enabled: () => true, onClick: () => this.select('sun') });
+    }
 
     // Planets on their (compressed) orbits, at fixed display longitudes
     const sphere = geo(new THREE.SphereGeometry(1, 14, 10));
@@ -73,7 +77,7 @@ export class StarMapPanel extends PanelController {
     const proxyMat = new THREE.MeshBasicMaterial({ visible: false });
     this.owned.push(proxyMat);
     let lon = 0.6;
-    for (const e of STARMAP) {
+    for (const e of game.travel.visibleEntries()) {
       const body = BODIES.find((b) => b.id === e.body);
       if (!body) continue;
       let p: THREE.Vector3;
@@ -82,14 +86,14 @@ export class StarMapPanel extends PanelController {
         if (!parent) continue;
         p = parent.clone().add(parent.clone().setY(0).normalize().multiplyScalar(0.07)).add(new THREE.Vector3(0, 0.03, 0));
       } else {
-        const r = orbitR(body.orbit);
+        const r = orbitR(body.kind === 'star' ? 0 : body.system === 'vesper' ? body.orbit * 12 : body.orbit);
         const tilt = body.id === 'pluto' ? THREE.MathUtils.degToRad(17) : 0;
         lon += 2.39996; // golden angle: evenly spread, deterministic
         p = new THREE.Vector3(Math.cos(lon) * r, Math.sin(lon) * r * Math.sin(tilt), Math.sin(lon) * r * Math.cos(tilt));
-        if (body.id !== 'ceres') circle(r, tilt);
+        if (body.id !== 'ceres' && r > 0.001) circle(r, tilt);
       }
       this.bodyPos.set(body.id, p);
-      const size = body.radiusKm > 20000 ? 0.028 : body.radiusKm > 3000 ? 0.018 : 0.012;
+      const size = body.kind === 'star' ? 0.03 : body.kind === 'structure' ? 0.02 : body.radiusKm > 20000 ? 0.028 : body.radiusKm > 3000 ? 0.018 : 0.012;
       const m = new THREE.Mesh(sphere, additive(COLORS[body.id] ?? '#ffffff', 0.95));
       m.scale.setScalar(size);
       m.position.copy(p);
@@ -108,7 +112,7 @@ export class StarMapPanel extends PanelController {
       this.controls.push({ id, object: proxy, label: () => `${body.name} — ${this.game.travel.status(e).ok ? 'course available' : 'details'}`, enabled: () => true, onClick: () => this.select(id) });
     }
     // Asteroid belt: a haze of points between 2.2 and 3.3 AU
-    {
+    if (sol) {
       const n = 500;
       const pos = new Float32Array(n * 3);
       for (let i = 0; i < n; i++) {
@@ -251,7 +255,7 @@ export class StarMapPanel extends PanelController {
     ctx.fillStyle = '#ffb347';
     ctx.font = 'bold 34px "Segoe UI", system-ui, sans-serif';
     ctx.fillText(body.name.toUpperCase(), 24, 50);
-    const dist = body.kind === 'moon' ? `${body.orbit.toLocaleString()} km from ${this.nameOf(body.parent ?? '')}` : body.kind === 'star' ? 'Centre of the Solar System' : `${body.orbit} AU from the Sun`;
+    const dist = body.kind === 'moon' ? `${body.orbit.toLocaleString()} km from ${this.nameOf(body.parent ?? '')}` : body.kind === 'star' ? 'Centre of the system' : `${body.orbit} AU from ${body.system === 'vesper' ? 'Vesper' : 'the Sun'}`;
     ScreenUI.text(ctx, `${body.kind.toUpperCase()} · r ${body.radiusKm.toLocaleString()} km · g ${body.gravity} m/s²`, 24, 90, '#9fe8ff', 22);
     ScreenUI.text(ctx, dist, 24, 120, '#9fe8ff', 22);
     let y = 156;
@@ -267,7 +271,7 @@ export class StarMapPanel extends PanelController {
     }
     const st = this.game.travel.status(e);
     if (e.zone) {
-      ScreenUI.text(ctx, `Transfer: ${e.realTime} · ${TRANSIT_SECONDS} s cruise`, 24, 296, '#cfe9f2', 21);
+      ScreenUI.text(ctx, `Transfer: ${e.realTime} · ${e.seconds ?? TRANSIT_SECONDS} s cruise`, 24, 296, '#cfe9f2', 21);
       ScreenUI.text(ctx, `Burn: ${e.cost} kg propellant`, 24, 326, '#cfe9f2', 21);
     }
     let yy = 370;

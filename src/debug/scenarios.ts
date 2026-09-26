@@ -110,6 +110,18 @@ export function scenarioState(id: string): GameState {
         s.player.spawnId = 'ramp';
       }
       break;
+    case 'ceres':
+    case 'europa':
+    case 'titan':
+    case 'pluto':
+    case 'threshold':
+    case 'vesper':
+    case 'archive':
+    case 'venus':
+    case 'mercury': {
+      lateGame(s, id);
+      break;
+    }
     default:
       s.player.locationId = 'moon.south';
       s.player.spawnId = 'ramp';
@@ -131,6 +143,80 @@ function postSlice(s: GameState): void {
   s.granted['story.launch'] = true;
   s.ship.propellant = 1600;
   s.flags['ship.propellant'] = 1600;
+}
+
+function done(s: GameState, q: string): void {
+  const def = CONTENT.quests[q];
+  s.quests[q] = { status: 'completed', stage: def.stages[def.stages.length - 1].id, progress: {}, history: def.stages.map((x) => x.id) };
+  s.granted[`quest:${q}:rewards`] = true;
+}
+
+/** Acts 2–5 jump points: everything before the named destination is completed. */
+function lateGame(s: GameState, id: string): void {
+  postSlice(s);
+  const order = ['ceres', 'europa', 'titan', 'pluto', 'threshold', 'vesper', 'archive'];
+  const at = order.indexOf(id);
+  for (const q of ['mq.frontier', 'mq.footprints']) done(s, q);
+  for (const f of ['course.mars', 'melas.found', 'melas.cable', 'melas.cells', 'melas.power', 'melas.debrief', 'footprints.revealed', 'spire.reported', 'network.briefed', 'hint.mars']) s.flags[f] = true;
+  for (const d of ['mars', 'mars.orbit', 'mars.melas', 'mars.station', 'mars.spire']) s.universe.discovered[d] = true;
+  s.flags['ship.propellant'] = 2400;
+  s.ship.propellant = 2400;
+  const fusion = at >= 1 || id === 'venus' || id === 'mercury';
+  if (fusion) {
+    done(s, 'mq.network');
+    for (const f of ['ceres.met', 'ceres.pylon.1', 'ceres.pylon.2', 'ceres.pylon.3', 'ceres.hangar']) s.flags[f] = true;
+    for (const st of ['core', 'coils', 'tune']) s.ship.systems['prop.fusion'].steps[st] = true;
+    s.ship.systems['prop.fusion'].online = true;
+    s.ship.systems['prop.fusion'].condition = 1;
+    s.ship.propellant = 4400;
+  }
+  if (id === 'venus' || id === 'mercury') {
+    s.ship.systems['hull.thermal'].steps.tiles = true;
+    s.ship.systems['hull.thermal'].online = true;
+    s.ship.systems['hull.thermal'].condition = 1;
+  }
+  if (at >= 2) {
+    s.flags['europa.recorder'] = true;
+    s.flags['cadence.1'] = true;
+    s.universe.discovered['europa.conamara'] = true;
+  }
+  if (at >= 3) {
+    s.flags['titan.recorder'] = true;
+    s.flags['cadence.2'] = true;
+    s.universe.discovered['titan.kraken'] = true;
+  }
+  if (at >= 4) {
+    done(s, 'mq.cadence');
+    s.flags['okonkwo.found'] = true;
+    s.universe.discovered['pluto.sputnik'] = true;
+    s.inventories.player.stacks.push({ itemId: 'latticekey', qty: 1 });
+  }
+  if (at >= 5) {
+    done(s, 'mq.threshold');
+    for (const f of ['threshold.docked', 'threshold.open', 'threshold.entered']) s.flags[f] = true;
+    s.universe.discovered['threshold.zone'] = true;
+  }
+  if (at >= 6) {
+    done(s, 'mq.vesper');
+    for (const d of ['vesper.orbit', 'vesper.terminator', 'vesper.archive.door']) s.universe.discovered[d] = true;
+  }
+  const surface: Record<string, string> = { ceres: 'ceres.occator', europa: 'europa.conamara', titan: 'titan.kraken', pluto: 'pluto.sputnik', vesper: 'vesper.terminator', archive: 'vesper.terminator', mercury: 'mercury.chao' };
+  if (id === 'threshold') {
+    s.flags['threshold.docked'] = true;
+    s.universe.discovered['threshold.zone'] = true;
+    s.ship.parking = { kind: 'docked', locationId: 'threshold.interior', portId: 'dock' };
+    s.player.locationId = 'threshold.interior';
+    s.player.spawnId = 'dock';
+  } else if (id === 'venus') {
+    s.ship.parking = { kind: 'docked', locationId: 'venus.halcyon', portId: 'lock' };
+    s.player.locationId = 'venus.halcyon';
+    s.player.spawnId = 'lock';
+  } else {
+    s.ship.parking = { kind: 'surface', locationId: surface[id] };
+    s.player.locationId = id === 'archive' ? 'vesper.archive' : surface[id];
+    s.player.spawnId = id === 'archive' ? 'entry' : 'ramp';
+  }
+  s.meta.chapter = at >= 5 ? 'Act 4 — The Unknown' : at >= 1 ? 'Act 3 — The Outer System' : 'Act 2 — The Frontier';
 }
 
 /** Mark ship systems repaired/online up to a milestone (dev/test only). */

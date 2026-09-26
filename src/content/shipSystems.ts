@@ -71,15 +71,36 @@ export const SHIP_SYSTEMS: ShipSystemDef[] = [
       { id: 'hull', label: 'Weld exterior hull plates (3)', where: 'Exterior — ventral hull' },
     ],
   },
+  {
+    id: 'prop.fusion', name: 'Kestrel Fusion Torch', group: 'propulsion', powerKW: 25, dependsOn: ['power.reactor', 'prop.main'],
+    description: 'Prototype D-He3 fusion drive from Ceres Deep. Extends the Lantern’s reach to the outer planets and adds 2,000 kg of tankage.',
+    steps: [
+      { id: 'core', label: 'Seat the fusion core', where: 'Deck 3 — engineering upgrade console', consumes: [{ item: 'fusioncore', qty: 1 }] },
+      { id: 'coils', label: 'Install the magnetic nozzle coils', where: 'Deck 3 — engineering upgrade console', consumes: [{ item: 'magcoil', qty: 2 }] },
+      { id: 'tune', label: 'Tune the confinement field', where: 'Deck 3 — engineering upgrade console' },
+    ],
+  },
+  {
+    id: 'hull.thermal', name: 'Thermal Shield', group: 'structure', powerKW: 0, dependsOn: [],
+    description: 'Ceramic tiles for the sunward hull. Needed to fly the inner Solar System (Venus, Mercury).',
+    steps: [{ id: 'tiles', label: 'Fit the thermal tiles', where: 'Deck 3 — engineering upgrade console', consumes: [{ item: 'thermaltile', qty: 6 }] }],
+  },
 ];
 
 /** Propellant needed for lunar ascent to orbit (kg). */
 export const LAUNCH_PROPELLANT = 1200;
 
-/** Total hydrolox tank capacity (kg). */
+/** Hydrolox tank capacity before upgrades (kg). */
 export const PROPELLANT_CAPACITY = 2400;
+/** Extra tankage fitted with the Kestrel fusion torch (its reaction mass is also hydrogen). */
+export const FUSION_EXTRA_TANK = 2000;
+
+/** Current tank capacity. */
+export function propellantCapacity(state: { ship: { systems: Record<string, { online: boolean }> } }): number {
+  return PROPELLANT_CAPACITY + (state.ship.systems['prop.fusion']?.online ? FUSION_EXTRA_TANK : 0);
+}
 
 /** Propellant for leaving each world's surface to its orbit zone (kg). */
-export const ASCENT_COST: Record<string, number> = { moon: 150, mars: 450 };
+export const ASCENT_COST: Record<string, number> = { moon: 150, mars: 450, ceres: 60, europa: 200, titan: 250, pluto: 120, mercury: 400, vesperb: 700 };
 /** Propellant for a powered descent (Mars aerobrakes most of the way). */
-export const DESCENT_COST: Record<string, number> = { moon: 100, mars: 150 };
+export const DESCENT_COST: Record<string, number> = { moon: 100, mars: 150, ceres: 40, europa: 150, titan: 60, pluto: 80, mercury: 300, vesperb: 150 };

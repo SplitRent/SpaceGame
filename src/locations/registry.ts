@@ -1,6 +1,7 @@
 import type { Game } from '../Game';
 import type { Location } from './Location';
 import { ZONES } from '../content/zones';
+import { SURFACES, INTERIORS } from '../content/worlds';
 
 export interface LocationEntry {
   name: string;
@@ -83,3 +84,33 @@ export const LOCATION_REGISTRY: Record<string, LocationEntry> = {
     create: async (g) => new (await import('./cinematic/OpeningStage')).OpeningStage(g),
   },
 };
+
+// Data-driven worlds: every space zone, surface region and interior declared in content.
+for (const z of Object.values(ZONES)) {
+  if (LOCATION_REGISTRY[z.id]) continue;
+  LOCATION_REGISTRY[z.id] = {
+    name: z.name,
+    body: z.body,
+    kind: 'space',
+    loadingText: 'Orbit insertion…',
+    create: async (g) => new (await import('./space/SpaceZone')).SpaceZone(g, z),
+  };
+}
+for (const d of Object.values(SURFACES)) {
+  LOCATION_REGISTRY[d.id] = {
+    name: d.name,
+    body: d.body,
+    kind: 'surface',
+    loadingText: `Stepping out onto ${d.title}…`,
+    create: async (g) => new (await import('./surface/SurfaceRegion')).SurfaceRegion(g, d),
+  };
+}
+for (const d of Object.values(INTERIORS)) {
+  LOCATION_REGISTRY[d.id] = {
+    name: d.name,
+    body: d.body,
+    kind: d.style === 'alien' ? 'interior' : 'station',
+    loadingText: d.style === 'alien' ? '…' : 'Cycling the airlock…',
+    create: async (g) => new (await import('./interior/GenericInterior')).GenericInterior(g, d),
+  };
+}

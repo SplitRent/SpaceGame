@@ -3,6 +3,8 @@ import type { NpcDef } from './types';
 const CRASHED = { flag: 'crashed' } as const;
 const PRE = { notFlag: 'crashed' } as const;
 const FLOWN = { flag: 'launched' } as const;
+/** Act 5: the whole crew gathers in the Archive's Heart for the choice. */
+const GATHERED = { all: [{ flag: 'archive.mem3' }, { notFlag: 'game.complete' }] };
 
 /**
  * Crew definitions. Presence is a *function of state*: the first matching rule decides
@@ -17,7 +19,10 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.okonkwo',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'bridge.commander', activity: 'idle' },
-      // Missing after the crash.
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.heart', activity: 'idle' },
+      { if: { flag: 'okonkwo.found' }, location: 'lantern.interior', spot: 'bridge.commander', activity: 'work' },
+      // Missing after the crash — until the crew finds her on Pluto.
+      { if: { discovered: 'pluto.sputnik' }, location: 'pluto.sputnik', spot: 'okonkwo', activity: 'idle' },
     ],
   },
   {
@@ -26,6 +31,7 @@ export const NPCS: NpcDef[] = [
     suitColor: '#e8ecf2', accentColor: '#2f80ed', skinTone: '#e0b48f', hairColor: '#1b1b1b', height: 1.72,
     dialogue: 'dlg.arakawa',
     presence: [
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.c1', activity: 'idle' },
       { if: PRE, location: 'lantern.interior', spot: 'bridge.pilot', activity: 'sit' },
       { if: FLOWN, location: 'lantern.interior', spot: 'bridge.nav', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.nav', activity: 'idle' },
@@ -40,6 +46,7 @@ export const NPCS: NpcDef[] = [
     suitColor: '#ececec', accentColor: '#f2994a', skinTone: '#b07a55', hairColor: '#3b2314', height: 1.66,
     dialogue: 'dlg.castellanos',
     presence: [
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.c2', activity: 'idle' },
       { if: PRE, location: 'lantern.interior', spot: 'eng.console', activity: 'work' },
       { if: FLOWN, location: 'lantern.interior', spot: 'bridge.eng', activity: 'work' },
       { if: { all: [{ questActive: 'mq.ascent' }] }, location: 'lantern.interior', spot: 'bridge.eng', activity: 'work' },
@@ -54,6 +61,7 @@ export const NPCS: NpcDef[] = [
     suitColor: '#f4f1ea', accentColor: '#27ae60', skinTone: '#4a2f22', hairColor: '#0f0c0b', height: 1.7,
     dialogue: 'dlg.sola',
     presence: [
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.c3', activity: 'idle' },
       { if: PRE, location: 'lantern.interior', spot: 'lab.bench', activity: 'work' },
       { if: FLOWN, location: 'lantern.interior', spot: 'bridge.science', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.science', activity: 'work' },
@@ -68,6 +76,7 @@ export const NPCS: NpcDef[] = [
     suitColor: '#f3f3f3', accentColor: '#eb5757', skinTone: '#f0c8a8', hairColor: '#a0652d', height: 1.68,
     dialogue: 'dlg.novak',
     presence: [
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.c4', activity: 'idle' },
       { if: PRE, location: 'lantern.interior', spot: 'medbay.station', activity: 'work' },
       { if: FLOWN, location: 'lantern.interior', spot: 'medbay.station', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.medic', activity: 'idle' },
@@ -81,6 +90,7 @@ export const NPCS: NpcDef[] = [
     suitColor: '#eef0f2', accentColor: '#9b51e0', skinTone: '#c49a74', hairColor: '#2a1a12', height: 1.8,
     dialogue: 'dlg.haddad',
     presence: [
+      { if: GATHERED, location: 'vesper.archive', spot: 'archive.c5', activity: 'idle' },
       { if: PRE, location: 'lantern.interior', spot: 'bridge.comms', activity: 'sit' },
       { if: FLOWN, location: 'lantern.interior', spot: 'bridge.comms', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.comms', activity: 'sit' },
@@ -121,5 +131,26 @@ export const NPCS: NpcDef[] = [
       { if: { flag: 'melas.power' }, location: 'mars.station', spot: 'melas.lab', activity: 'work' },
       { if: { always: true }, location: 'mars.station', spot: 'melas.shelter.b', activity: 'idle' },
     ],
+  },
+  {
+    id: 'adeyemi', name: 'Yusuf Adeyemi', role: 'Ceres Deep Quartermaster',
+    bio: 'Runs Ceres Deep like a ship: everything logged, everything stowed. Has not slept properly since the drones stopped listening to him.',
+    suitColor: '#d8d2c4', accentColor: '#3fa9f5', skinTone: '#5a3a28', hairColor: '#1a1410', height: 1.86,
+    dialogue: 'dlg.adeyemi',
+    presence: [{ if: { always: true }, location: 'ceres.deep', spot: 'deep.ops', activity: 'work' }],
+  },
+  {
+    id: 'zhou', name: 'Dr. Mei-Ling Zhou', role: 'Propulsion Engineer, Ceres Deep',
+    bio: 'Built a fusion torch in a cave on a dwarf planet because nobody on Earth would fund it. Speaks fast and exactly.',
+    suitColor: '#d8d2c4', accentColor: '#c77dff', skinTone: '#e0b890', hairColor: '#101010', height: 1.6,
+    dialogue: 'dlg.zhou',
+    presence: [{ if: { always: true }, location: 'ceres.deep', spot: 'deep.bench', activity: 'work' }],
+  },
+  {
+    id: 'ferreira', name: 'Dr. Beatriz Ferreira', role: 'Halcyon Aerostat Director',
+    bio: 'Has lived above the clouds of Venus for three years. Considers solid ground overrated.',
+    suitColor: '#f2e8d0', accentColor: '#ffb347', skinTone: '#c68a5e', hairColor: '#3a2014', height: 1.7,
+    dialogue: 'dlg.ferreira',
+    presence: [{ if: { always: true }, location: 'venus.halcyon', spot: 'halcyon.lab', activity: 'work' }],
   },
 ];

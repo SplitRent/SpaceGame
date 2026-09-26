@@ -664,19 +664,23 @@ export class LanternInterior extends Location {
     } else if (kind === 'transit') {
       // Interplanetary cruise: only the destination, growing ahead of the bow.
       const z = ZONES[where];
-      const dest = createPlanet((z?.planet.kind ?? 'mars') as PlanetKind, 60, { segments: 64 });
-      dest.group.position.set(-150, 40, -3200);
-      this.outside.add(dest.group);
-      this.planets.push(dest);
-      this.transitPlanet = dest;
+      if (z?.planet) {
+        const dest = createPlanet(z.planet.kind as PlanetKind, 60, { segments: 64 });
+        dest.group.position.set(-150, 40, -3200);
+        this.outside.add(dest.group);
+        this.planets.push(dest);
+        this.transitPlanet = dest;
+      }
       this.sky.sunDir.set(0.6, 0.15, 0.7).normalize();
     } else {
       // In orbit around a world
       const z = ZONES[where] ?? ZONES['space.cislunar'];
-      const planet = createPlanet(z.planet.kind as PlanetKind, 900, { segments: 96 });
-      planet.group.position.set(0, -1400, -600);
-      this.outside.add(planet.group);
-      this.planets.push(planet);
+      if (z.planet) {
+        const planet = createPlanet(z.planet.kind as PlanetKind, 900, { segments: 96 });
+        planet.group.position.set(0, -1400, -600);
+        this.outside.add(planet.group);
+        this.planets.push(planet);
+      }
       this.sky.sunDir.set(...z.sunDir).normalize();
     }
   }

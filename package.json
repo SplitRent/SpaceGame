@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate:content": "vitest run tests/content",
-    "test:e2e": "node scripts/e2e-smoke.mjs && node scripts/e2e-late.mjs && node scripts/e2e-mars.mjs"
+    "test:e2e": "node scripts/e2e-smoke.mjs && node scripts/e2e-late.mjs && node scripts/e2e-mars.mjs && node scripts/e2e-finale.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",

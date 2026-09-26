@@ -49,9 +49,11 @@ Design filter: *If a feature doesn't make the world, exploration, crew, ship, su
 | 0 | The Expedition | Celebrated launch from Earth. Crew shuttle docks with the huge **EXV Lantern** in Earth orbit (scale reveal). Playable Earth→Moon cruise: meet the crew, learn controls through real duties. On approach to Harbor Station, the Blackglass appears and discharges. Harbor goes dark; the Lantern loses control. |
 | 1 | Stranded | Crash on the Moon's south polar region, far-side facing (no line of sight to Earth). Commander is missing. Survive, build a base, repair the ship, climb to see Earthrise and restore contact, find a Blackglass fragment, abandoned outpost logs of *regular* moonquakes, an anomalous cavity. First launch. |
 | 2 | The Frontier | Harbor Station (damaged, survivors) becomes the first hub. Earth is closed by a Directorate quarantine. **Mars (implemented):** Melas Station in Valles Marineris went dark at the same second as Harbor; restore its power, see the commander's suit on its camera, follow her footprints to a Blackglass spire keeping the same 1,969 s time — the touched places form a network. Then: asteroid belt, Venus aerostat, Mercury. Evidence the Blackglass has visited before. |
+| 2b | The Network (implemented) | Harbor’s burst log lists the touched sites; the fourth is Ceres, where Ceres Deep’s prototype Kestrel fusion torch opens the outer system. |
 | 3 | The Outer System | Jupiter (Europa/Ganymede), Saturn (rings, Titan, Enceladus), Uranus, Neptune/Triton, Pluto/Charon. The Cadence resolves into coordinates. The expedition was *meant* to be intercepted. |
-| 4 | The Unknown | The **Threshold** beyond Pluto; first fictional star system; non-human ruins. |
-| 5 | The Truth | Why the Lantern was chosen; the commander's role; the Cadence's source; final decisions. |
+| 3 (implemented) | The Cadence | Europa, Titan, Pluto: each node sings one line of the Cadence and holds a recording from the commander, who walked the node roads; she waits on Pluto with the Lattice Key. |
+| 4 | The Unknown (implemented) | The **Threshold** at 51 AU; the glyph Door; Vesper, an orange K-dwarf 41 ly away; Vesper b, tidally locked and alive; the Builders’ ruins. |
+| 5 | The Truth (implemented) | The Archive: the Builders seeded listening nodes; Apollo 12’s ascent stage made the Moon ring in November 1969 and woke one; the Cadence echoes that year; answering it summons the courier (the Blackglass) to fetch whoever answered — Okonkwo, via Project Lighthouse. Three endings: open the Lattice, close it, or follow the Builders. |
 
 Main story gives direction, never confinement. Side content: crew stories, science, salvage, rescue, trade, station contracts, planet-specific stories, environmental storytelling (logs, wrecks, abandoned facilities).
 
@@ -232,3 +234,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 | 2026-09-26 | Interplanetary transit is a 90 s playable cruise stored in the ship's parking state, so it survives save/load and continues while the player walks the ship. |
 | 2026-09-26 | Interior gravity follows the parked world (Moon 1.62, Mars 3.71); 1 g simplification in orbit/transit. |
 | 2026-09-26 | First Mars region: Melas Chasma (Valles Marineris), chosen for its real layered sediments and the drama of canyon walls. Melas Station crew: Dr. Anand Rao (lead areologist), Lucía Benedetti (engineer); Kamau and Ishikawa missing with the rover. |
+| 2026-09-26 | The story is completed through Act 5 with three endings; the game continues as free exploration afterwards (Earth quarantine lifted). |
+| 2026-09-26 | Worlds after Mars are data (SurfaceDef/InteriorDef); all anomaly scans are scanner tier 1 so no scan can block the main story. |
+| 2026-09-26 | Outer-system suit liners (from Ceres Deep) rate the suit to −230 °C, so Europa, Titan and Pluto are survivable without constant heater drain; Europa’s radiation is a slow health drain as a time pressure. |
+| 2026-09-26 | Never stranded: landing is always possible (near-empty tank → autopilot glide), every landable world has ice, and the Lantern carries an onboard propellant still. |

@@ -9,7 +9,7 @@ import {
   type LocationPersistentState,
 } from './GameState';
 import { addItem, countItem, removeItem } from '../gameplay/inventory';
-import { PROPELLANT_CAPACITY } from '../content/shipSystems';
+import { propellantCapacity } from '../content/shipSystems';
 
 export const PLAYER_INV = 'player';
 
@@ -26,6 +26,8 @@ export interface StoreEvents extends Record<string, unknown> {
   notify: { text: string; kind?: 'info' | 'item' | 'quest' | 'warn' | 'discovery' };
   discovered: { id: string };
   story: { id: string };
+  log: { title: string; text: string };
+  travel: { location: string; spawn: string; label?: string };
   entityChanged: { location: string; entity: string };
 }
 
@@ -60,6 +62,7 @@ export class Store {
     if ('any' in cond) return cond.any.some((c) => this.check(c));
     if ('not' in cond) return !this.check(cond.not);
     if ('always' in cond) return true;
+    if ('never' in cond) return false;
     if ('flag' in cond) {
       const v = s.flags[cond.flag];
       if (cond.eq !== undefined) return v === cond.eq;
@@ -218,6 +221,14 @@ export class Store {
       this.events.emit('story', { id: e.story });
       return;
     }
+    if ('log' in e) {
+      this.events.emit('log', e.log);
+      return;
+    }
+    if ('travel' in e) {
+      this.events.emit('travel', e.travel);
+      return;
+    }
     console.warn('[Store] unknown effect', e);
   }
 
@@ -331,7 +342,7 @@ export class Store {
   /** Set ship propellant (clamped to tank capacity) and mirror it into the condition flag. */
   setPropellant(kg: number): void {
     const s = this.state;
-    s.ship.propellant = Math.max(0, Math.min(PROPELLANT_CAPACITY, kg));
+    s.ship.propellant = Math.max(0, Math.min(propellantCapacity(s), kg));
     this.state.flags['ship.propellant'] = Math.round(s.ship.propellant);
     this.touch('propellant');
   }

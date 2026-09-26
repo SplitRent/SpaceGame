@@ -9,7 +9,7 @@ import { createPlanet, type PlanetHandle } from '../../render/planets';
 import { Sky } from '../../render/sky';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
 import { pushNotification } from '../../ui/uiState';
-import { PROPELLANT_CAPACITY } from '../../content/shipSystems';
+import { propellantCapacity } from '../../content/shipSystems';
 
 /**
  * Harbor Station habitation ring (spin gravity ≈ 0.5 g): docking port and airlock, the
@@ -173,17 +173,17 @@ export class HarborStation extends Location {
     this.registerInteractable({
       id: 'harbor.depot', object: depot, kind: 'use', prompt: () => 'Propellant depot — refuel the Lantern',
       available: () => !!game.store.state.flags['harbor.survivors'],
-      detail: () => `Lantern tanks ${Math.round(game.store.state.ship.propellant)} / ${PROPELLANT_CAPACITY} kg`,
+      detail: () => `Lantern tanks ${Math.round(game.store.state.ship.propellant)} / ${propellantCapacity(game.store.state)} kg`,
       interact: () => {
         const st = game.store;
         if (st.state.ship.parking.kind !== 'docked') return;
-        if (st.state.ship.propellant >= PROPELLANT_CAPACITY - 1) {
+        if (st.state.ship.propellant >= propellantCapacity(game.store.state) - 1) {
           pushNotification('The Lantern’s tanks are already full.', 'info');
           return;
         }
-        st.setPropellant(PROPELLANT_CAPACITY);
+        st.setPropellant(propellantCapacity(game.store.state));
         game.audio.play('confirm');
-        pushNotification(`Pumping hydrolox across the port… tanks full: ${PROPELLANT_CAPACITY} kg.`, 'info');
+        pushNotification(`Pumping hydrolox across the port… tanks full: ${propellantCapacity(game.store.state)} kg.`, 'info');
       },
     });
 

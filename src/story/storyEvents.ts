@@ -3,7 +3,7 @@ import type { Game } from '../Game';
 import { CinematicPlayer, type Shot } from '../cinematics/Cinematic';
 import { ui, pushNotification } from '../ui/uiState';
 import { ZONES, zoneForStation, zoneForSurface } from '../content/zones';
-import { ASCENT_COST } from '../content/shipSystems';
+import { ASCENT_COST, propellantCapacity } from '../content/shipSystems';
 
 /**
  * Story beats raised by content effects ({ story: id }) or by systems coming online.
@@ -187,6 +187,66 @@ export function registerStoryEvents(game: Game): void {
       await game.locations.travel({ location: z.id, spawn: 'ascent' }, { label: `Main engine start… lift-off. Climbing to orbit (−${cost} kg).`, fadeTime: 0.8 });
     }
   });
+
+  /* ---------------------------- Acts 2–5 beats ---------------------------- */
+  story.on('refuel.full', () => {
+    const p = store.state.ship.parking;
+    if (p.kind !== 'surface' && p.kind !== 'docked') {
+      pushNotification('The Lantern isn’t connected here.', 'warn');
+      return;
+    }
+    const cap = propellantCapacity(store.state);
+    if (store.state.ship.propellant >= cap - 1) {
+      pushNotification('The Lantern’s tanks are already full.', 'info');
+      return;
+    }
+    store.setPropellant(cap);
+    game.audio.play('confirm');
+    pushNotification(`Tanks full: ${cap} kg.`, 'info');
+  });
+  story.on('fusion.online', () => {
+    say([
+      ['Castellanos', 'Confinement stable. Oh, listen to her. That’s not a drive, that’s a choir.'],
+      ['Arakawa', 'Jupiter in weeks. I’m going to need a bigger star chart.'],
+      ['Haddad', 'The Cadence changed pitch the second we lit the torch. It knows.'],
+    ]);
+  });
+  const jump = async (to: string, label: string) => {
+    const z = ZONES[to];
+    const pos = new THREE.Vector3(...z.arrival.pos);
+    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(pos, new THREE.Vector3(...z.arrival.look), new THREE.Vector3(0, 1, 0)));
+    store.batch('gate', () => {
+      store.state.ship.parking = { kind: 'space', locationId: to, position: [pos.x, pos.y, pos.z], quat: [q.x, q.y, q.z, q.w] };
+      store.markChanged('gate');
+    });
+    game.audio.stinger('wonder');
+    ui.fadeColor.value = '#e8e0ff';
+    await game.locations.travel({ location: to, spawn: 'arrival' }, { label, fadeTime: 1.4 });
+    ui.fadeColor.value = '#000';
+  };
+  story.on('gate.open', async () => {
+    say([
+      ['Okonkwo', 'Everyone to your stations. It’s opening.'],
+      ['Arakawa', 'I have no idea how to fly this.'],
+      ['Okonkwo', 'You don’t. It flies us.'],
+    ]);
+    await new Promise((r) => setTimeout(r, 6000));
+    await jump('space.vesper', 'The Door opens. The Lantern falls through a corridor of light…');
+    say([
+      ['Sola', 'That’s… that’s not our Sun. That star is orange.'],
+      ['Haddad', 'Navigation says we are forty-one light-years from Earth. Navigation is very upset.'],
+      ['Okonkwo', 'Welcome to Vesper. There’s a world below us. It’s alive.'],
+    ]);
+  });
+  story.on('gate.return', async () => {
+    await jump('space.threshold', 'The Far Gate opens. Home is on the other side…');
+    say([['Arakawa', 'Threshold. Pluto’s that way. And behind that, everything.']]);
+  });
+  for (const id of ['open', 'close', 'beyond']) {
+    story.on(`ending.${id}`, () => {
+      setTimeout(() => game.playEnding(id), 1500);
+    });
+  }
 
   /* -------------------------------- Transit -------------------------------- */
   story.on('transit.depart', () => {

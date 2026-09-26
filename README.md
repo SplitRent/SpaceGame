@@ -50,7 +50,8 @@ surface with the pilot seat's flight deck key.
 `http://localhost:5173/?start=moon` (post-crash on the Moon), `?start=ship`, `?start=rich`
 (base-building sandbox), `?start=frontier` (Act 2 start, in lunar orbit, ready to plot a
 course), `?start=transit`, `?start=marsorbit`, `?start=mars` (landed in Melas Chasma),
-`?start=melas` (inside Melas Station); `&quality=low` for weak GPUs. Press `` ` `` for the
+`?start=melas` (inside Melas Station), and later acts: `ceres`, `europa`, `titan`, `pluto`,
+`threshold`, `vesper`, `archive`, `venus`, `mercury`; `&quality=low` for weak GPUs. Press `` ` `` for the
 debug overlay.
 
 ## Assets & licences
