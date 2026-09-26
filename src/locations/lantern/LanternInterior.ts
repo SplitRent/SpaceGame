@@ -195,13 +195,13 @@ export class LanternInterior extends Location {
     b.solid('ceiling', 3.2, 0.2, 10, 0, 3.1, 21);
     const stairLen = Math.hypot(10, 4);
     const stairAng = Math.atan2(4, 10);
-    b.collider(3.1, 0.2, stairLen, 0, D3 / 2 - 0.1, 21, [-stairAng, 0, 0]);
+    b.collider(3.1, 0.2, stairLen, 0, D3 / 2 - 0.1, 21, [stairAng, 0, 0]);
     for (let i = 0; i < 20; i++) {
       const z = 16.25 + i * 0.5;
       const y = -(i + 1) * 0.2;
       kit.box('trim', 3, 0.2, 0.5, { x: 0, y: y + 0.1, z });
     }
-    for (const x of [-1.5, 1.5]) kit.box('metal', 0.06, 0.06, stairLen, { x, y: D3 / 2 + 1, z: 21 }, [-stairAng, 0, 0]);
+    for (const x of [-1.5, 1.5]) kit.box('metal', 0.06, 0.06, stairLen, { x, y: D3 / 2 + 1, z: 21 }, [stairAng, 0, 0]);
 
     /* ---------------------------- Furniture ---------------------------- */
     this.buildBridge(b, kit);
