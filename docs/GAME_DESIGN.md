@@ -48,7 +48,7 @@ Design filter: *If a feature doesn't make the world, exploration, crew, ship, su
 |---|---|---|
 | 0 | The Expedition | Celebrated launch from Earth. Crew shuttle docks with the huge **EXV Lantern** in Earth orbit (scale reveal). Playable Earth→Moon cruise: meet the crew, learn controls through real duties. On approach to Harbor Station, the Blackglass appears and discharges. Harbor goes dark; the Lantern loses control. |
 | 1 | Stranded | Crash on the Moon's south polar region, far-side facing (no line of sight to Earth). Commander is missing. Survive, build a base, repair the ship, climb to see Earthrise and restore contact, find a Blackglass fragment, abandoned outpost logs of *regular* moonquakes, an anomalous cavity. First launch. |
-| 2 | The Frontier | Harbor Station (damaged, survivors) becomes the first hub. Earth orbit, Mars, asteroid belt, Venus aerostat, Mercury. Evidence the Blackglass has visited before. The commander's trail. |
+| 2 | The Frontier | Harbor Station (damaged, survivors) becomes the first hub. Earth is closed by a Directorate quarantine. **Mars (implemented):** Melas Station in Valles Marineris went dark at the same second as Harbor; restore its power, see the commander's suit on its camera, follow her footprints to a Blackglass spire keeping the same 1,969 s time — the touched places form a network. Then: asteroid belt, Venus aerostat, Mercury. Evidence the Blackglass has visited before. |
 | 3 | The Outer System | Jupiter (Europa/Ganymede), Saturn (rings, Titan, Enceladus), Uranus, Neptune/Triton, Pluto/Charon. The Cadence resolves into coordinates. The expedition was *meant* to be intercepted. |
 | 4 | The Unknown | The **Threshold** beyond Pluto; first fictional star system; non-human ruins. |
 | 5 | The Truth | Why the Lantern was chosen; the commander's role; the Cadence's source; final decisions. |
@@ -141,6 +141,14 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 - Gas giants have **no walkable surface** — play happens in orbit, stations, moons and atmospheric research.
 - After Pluto, the **Threshold** opens travel to other stars. Fictional worlds are built from astrophysical profiles (star class, orbit, tidal locking, mass/gravity, atmosphere, temperature, water) and their biomes and life are derived from that profile.
 
+### Travel as implemented
+
+- **Star map:** a first-person hologram on the bridge holo table (reactor power required). Orbits are log-scaled so Mercury and Pluto fit; every world shows its data, facts, transfer time, burn cost, and *why* it can or cannot be reached (quarantine, thermal rating, drive range, or circumstance: docked, landed, fuel). PLOT COURSE is a physical key.
+- **Rules:** transfer burns start from orbit (not docked, not landed) with navigation and the main drive online; Moon ↔ Mars costs 800 kg of the 2,400 kg tank. Take-off costs 150 kg (Moon) / 450 kg (Mars); powered descent 100 / 150 kg (never strands you — a near-empty tank still lands). Refuelling: base-camp ice (Moon), Harbor's depot, Melas Station's ISRU plant.
+- **Transit:** the ship's parking state becomes `transit` (from, to, elapsed, duration 90 s). The clock runs wherever the player is — at the helm (cruise view with the origin receding and the destination growing) or walking the ship (the windows show the destination). Arrival parks the ship in the destination's orbit zone; crew beats fire at departure, halfway and arrival.
+- **Zones are data** (`content/zones.ts`): body, planet orientation, backdrop moons, station, salvage, landing corridor. One `SpaceZone` class renders lunar orbit and Mars orbit.
+- **Mars surface (Melas Chasma):** 2 km of canyon floor between spur-and-gully walls terraced into sulfate/clay layers; dark basaltic dunes; landslide fan; exposed ground ice in a shaded bluff; 3.71 m/s²; thin CO₂ (suit sealed); −90 °C nights; a compressed sol; a dust-scattering sky shader (butterscotch by day, blue around the setting Sun); dust storms (fog, wind-blown dust, dimmer sun, milder nights) once the station is found.
+
 ### Real-body visual references
 
 | Body | Must read as |
@@ -185,7 +193,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 | Tier | Contents |
 |---|---|
 | **CORE (vertical slice)** | Opening, crash, Moon region, crew, base, resources/scanner/crafting, ship interior + first-person panels, repair chain, first launch, lunar orbit flight, dock at Harbor Station, save/load. |
-| EARLY | Star map & transit, Earth orbit, Mars, asteroid belt, contracts/economy basics, second Moon region, ship upgrades, rover. |
+| EARLY | ~~Star map & transit~~ ✔, ~~Mars (Melas Chasma + station)~~ ✔, Earth orbit, asteroid belt, contracts/economy basics, second Moon region, ship upgrades, rover. |
 | MID | Venus, Mercury, Jupiter & Saturn systems, research tiers, more hostile machines. |
 | LATE | Uranus, Neptune, Pluto, the Threshold, first fictional system, wildlife, Acts 4–5. |
 | EXPANSION | More systems, factions, vehicles, gamepad, WebGPU, localization. |
@@ -220,3 +228,7 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 | 2026-09-26 | Death: respawn at the recovery point (ship medbay or base habitat); non-quest suit contents drop into a persistent, recoverable cache (merged, never destroyed). |
 | 2026-09-26 | Electric RCS always works without propellant (slow), so the player can never be stranded in orbit. |
 | 2026-09-26 | Vertical slice ends at Harbor Station with the survivors' revelation (automatic restart, an empty airlock cycling, an unscheduled outbound transmission toward the Cadence's source). |
+| 2026-09-26 | Star map is a first-person holo table on the bridge; courses are plotted there, never from a menu. Earth is locked by a Directorate quarantine (story reason), inner planets by thermal rating, belt/outer planets by drive range. |
+| 2026-09-26 | Interplanetary transit is a 90 s playable cruise stored in the ship's parking state, so it survives save/load and continues while the player walks the ship. |
+| 2026-09-26 | Interior gravity follows the parked world (Moon 1.62, Mars 3.71); 1 g simplification in orbit/transit. |
+| 2026-09-26 | First Mars region: Melas Chasma (Valles Marineris), chosen for its real layered sediments and the drama of canyon walls. Melas Station crew: Dr. Anand Rao (lead areologist), Lucía Benedetti (engineer); Kamau and Ishikawa missing with the rover. |

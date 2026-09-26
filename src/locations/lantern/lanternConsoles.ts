@@ -3,7 +3,9 @@ import type { Game } from '../../Game';
 import type { LanternInterior } from './LanternInterior';
 import { ConsolePanel, type ConsoleSpec } from '../../interaction/ConsolePanel';
 import { ScreenUI } from '../../render/screen';
-import { LAUNCH_PROPELLANT } from '../../content/shipSystems';
+import { LAUNCH_PROPELLANT, ASCENT_COST } from '../../content/shipSystems';
+import { zoneForSurface } from '../../content/zones';
+import { StarMapPanel } from './StarMapPanel';
 import { pushNotification, ui } from '../../ui/uiState';
 
 function ui_hint(text: string): void {
@@ -85,6 +87,19 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
   };
 
   const lowPower = () => !online('power.batteries') && crashed();
+
+  const flightStatus = () => {
+    const p = st().ship.parking;
+    if (p.kind === 'surface') return `Landed. Take-off costs ${ascentCost()} kg · ${Math.round(st().ship.propellant)} kg aboard`;
+    if (p.kind === 'transit') return `Transit ${Math.round((p.elapsed / p.duration) * 100)}% — autopilot coasting`;
+    if (p.kind === 'docked') return 'Docked. Clamps engaged.';
+    return 'In orbit — autopilot station-keeping';
+  };
+  const ascentCost = () => {
+    const p = st().ship.parking;
+    const body = p.kind === 'surface' ? zoneForSurface(p.locationId)?.body ?? 'moon' : 'moon';
+    return ASCENT_COST[body] ?? 200;
+  };
 
   /* =============================== ENGINEERING =============================== */
 
@@ -581,15 +596,21 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
         }
         items.forEach(([label, ok], i) => ScreenUI.status(ctx, 18 + (i % 2) * 440, 76 + Math.floor(i / 2) * 32, label, ok ? 'ok' : 'fault'));
         const ready = items.every(([, ok]) => ok);
-        ScreenUI.text(ctx, st().flags.launched ? 'In flight.' : ready ? (store.check({ questActive: 'mq.ascent' }) ? 'ALL SYSTEMS GO — LAUNCH AVAILABLE' : 'Ready. Gather the crew on the bridge.') : 'Launch inhibited', 18, h - 18, ready ? '#3ee08f' : '#ff7b7b', 16);
+        ScreenUI.text(ctx, st().flags.launched ? flightStatus() : ready ? (store.check({ questActive: 'mq.ascent' }) ? 'ALL SYSTEMS GO — LAUNCH AVAILABLE' : 'Ready. Gather the crew on the bridge.') : 'Launch inhibited', 18, h - 18, ready ? '#3ee08f' : '#ff7b7b', 16);
       },
     },
     controls: [
       {
         id: 'launch', kind: 'key', x: 0.8, y: -0.28, color: '#ff5a5a',
-        label: () => (st().flags.launched ? 'Take the helm' : 'LAUNCH'),
+        label: () => {
+          if (!st().flags.launched) return 'LAUNCH';
+          const p = st().ship.parking;
+          if (p.kind === 'surface') return `TAKE OFF — climb to orbit (${ascentCost()} kg)`;
+          if (p.kind === 'docked') return 'Take the helm — undock';
+          return 'Take the helm';
+        },
         enabled: () => {
-          if (st().flags.launched) return st().ship.parking.kind !== 'surface';
+          if (st().flags.launched) return st().ship.parking.kind !== 'surface' || st().ship.propellant >= ascentCost();
           return crashed() && store.check({ questActive: 'mq.ascent' }) && !!st().flags['ascent.crewReady'] && launchReady();
         },
         onClick: () => {
@@ -615,6 +636,22 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
     available: () => crashed(),
     kind: 'seat',
   });
+
+  // --- Commander's holo table: the star map
+  const tableRoot = new THREE.Group();
+  tableRoot.position.set(0, 0.98, -28.4);
+  loc.frame.add(tableRoot);
+  disposables.push(tableRoot);
+  const starMap = new StarMapPanel(game, tableRoot);
+  const holoPowered = () => online('power.reactor') || !crashed();
+  simple('holo.table', hotspot(0, 1.2, -28.4, 1.8, 0.6, 1.8), () => (holoPowered() ? 'Holographic star map' : 'Holo table (no reactor power)'), () => {
+    if (!holoPowered()) {
+      game.audio.play('error');
+      pushNotification('The holo projector needs reactor power.', 'warn');
+      return;
+    }
+    game.openPanel(starMap);
+  }, { kind: 'panel', range: 2.4, detail: () => (holoPowered() ? 'Plot interplanetary courses' : null) });
 
   /* ================================ HABITATION ================================= */
 
@@ -795,11 +832,15 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
         p.setScreenPowered(p === panels[0] ? true : powered);
         p.refresh();
       }
+      starMap.setPowered(holoPowered());
+      starMap.refresh();
     },
     update(dt: number) {
       sweep += dt * 1.6;
+      if (game.panel !== starMap) starMap.update(dt);
     },
     dispose() {
+      starMap.dispose();
       for (const p of panels) p.dispose();
       for (const d of disposables) disposeObject(d);
     },

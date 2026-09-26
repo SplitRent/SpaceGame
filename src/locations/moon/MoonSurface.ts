@@ -17,6 +17,7 @@ import { dayPhase } from '../../gameplay/presence';
 import type { Interactable } from '../../interaction/Interactable';
 import { ui, pushNotification } from '../../ui/uiState';
 import { RelayPanel } from './RelayPanel';
+import { addLanternExterior } from '../shipExterior';
 
 const SIZE = 2048;
 const CELL = 2;
@@ -274,7 +275,8 @@ export class MoonSurface extends Location {
     scene.add(this.fill);
 
     // ---- The Lantern (only if she is parked here) ----
-    const shipHere = store.state.ship.parking.kind === 'surface';
+    const pk = store.state.ship.parking;
+    const shipHere = pk.kind === 'surface' && pk.locationId === this.id;
     if (shipHere) this.buildShip();
 
     // ---- Rocks ----
@@ -376,64 +378,9 @@ export class MoonSurface extends Location {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;
       if (m && (m as THREE.MeshStandardMaterial).isMeshStandardMaterial) this.csm.setupMaterial(m);
     });
-    this.shipRoot.updateMatrixWorld(true);
-    const mtx = this.shipRoot.matrixWorld;
-    const q = new THREE.Quaternion().setFromRotationMatrix(mtx);
-    const box = (cx: number, cy: number, cz: number, hx: number, hy: number, hz: number) => {
-      const c = new THREE.Vector3(cx, cy, cz).applyMatrix4(mtx);
-      this.physics.addBox(c, new THREE.Vector3(hx, hy, hz), q);
-    };
-    box(0, 8.3, -39, 7.5, 5, 13);
-    box(0, 8.5, -5, 11.8, 6, 20);
-    box(0, 8, 37.5, 15.8, 7, 23.5);
-    box(0, 8, 66, 11, 4.5, 6);
-    box(-9.5, 3.6, -4, 2.6, 2.6, 17);
-    box(9.5, 3.6, -4, 2.6, 2.6, 17);
-    box(0, 17.2, 34, 6.5, 2.2, 6.5);
-    // Walkable cargo ramp
-    const a = this.ship.anchors;
-    const mid = a.ramp.clone().add(a.rampTop).multiplyScalar(0.5);
-    const len = a.ramp.distanceTo(a.rampTop);
-    const ang = Math.atan2(a.rampTop.y - a.ramp.y, a.ramp.x - a.rampTop.x);
-    const rq = q.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -ang)));
-    this.physics.addBox(mid.clone().applyMatrix4(mtx), new THREE.Vector3(len / 2, 0.2, 3.7), rq);
-
-    // Ship entrances
-    const rampDoor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 7), new THREE.MeshStandardMaterial({ color: '#1a1d22', emissive: '#ffcf8a', emissiveIntensity: 0 }));
-    rampDoor.position.copy(a.rampTop).add(new THREE.Vector3(-0.2, 2.6, 0));
-    this.ship.group.add(rampDoor);
+    const { rampDoor } = addLanternExterior(this.game, this, this.shipRoot, this.ship);
     this.entityObjects.set('rampDoor', rampDoor);
-    this.registerInteractable({
-      id: 'enter.cargo',
-      object: rampDoor,
-      kind: 'door',
-      range: 4,
-      prompt: () => 'Enter the Lantern — cargo hold',
-      interact: () => void this.game.locations.travel({ location: 'lantern.interior', spawn: 'cargo' }, { label: 'Entering the cargo hold…' }),
-    });
-    const airlockDoor = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3.4, 3), new THREE.MeshStandardMaterial({ color: '#2a2e35', emissive: '#7fd4ff', emissiveIntensity: 0.2 }));
-    airlockDoor.position.set(12.45, 7.3, -9);
-    this.ship.group.add(airlockDoor);
-    // Short ladder up to the airlock threshold
-    const ladder = new KitBuilder({ m: stdMat('#8b939c', { metalness: 0.7, roughness: 0.4 }) });
-    for (let i = 0; i < 6; i++) ladder.box('m', 0.1, 0.1, 1.4, { x: 13.2, y: 1 + i * 0.9, z: -9 });
-    ladder.box('m', 0.12, 6, 0.12, { x: 13.2, y: 3.2, z: -9.7 });
-    ladder.box('m', 0.12, 6, 0.12, { x: 13.2, y: 3.2, z: -8.3 });
-    ladder.box('m', 0.12, 12, 0.12, { x: 12.8, y: 10.5, z: -2.7 });
-    ladder.box('m', 0.12, 12, 0.12, { x: 12.8, y: 10.5, z: -1.3 });
-    for (let i = 0; i < 12; i++) ladder.box('m', 0.1, 0.1, 1.4, { x: 12.8, y: 5 + i * 0.95, z: -2 });
-    this.ship.group.add(ladder.build());
-    this.registerInteractable({
-      id: 'enter.airlock',
-      object: airlockDoor,
-      kind: 'door',
-      range: 4.5,
-      prompt: () => 'Cycle main airlock',
-      interact: () => {
-        this.game.audio.play('airlock');
-        void this.game.locations.travel({ location: 'lantern.interior', spawn: 'airlock' }, { label: 'Cycling airlock…' });
-      },
-    });
+    const a = this.ship.anchors;
 
     // Dorsal hull access (ladder) and the short-range antenna
     const ladderFoot = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3, 1.5), new THREE.MeshBasicMaterial({ visible: false }));
@@ -484,8 +431,6 @@ export class MoonSurface extends Location {
       },
       interact: () => this.game.repairStep('comms.short', 'antenna', 'comms.short'),
     });
-    this.scannables.push({ entry: 'db.lantern', object: this.ship.group, range: 120 });
-
     // Exterior hull weld points (final flight readiness)
     a.weldPoints.forEach((wp, i) => {
       const marker = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.6, 2.8), new THREE.MeshStandardMaterial({ color: '#2a2521', roughness: 1, emissive: '#ff6a2a', emissiveIntensity: 0.25 }));
@@ -1206,7 +1151,7 @@ export class MoonSurface extends Location {
       const [u, v] = this.mapTransform(x, z);
       if (u >= 0 && u <= 1 && v >= 0 && v <= 1) out.push({ x: u, y: v, label, color });
     };
-    if (s.ship.parking.kind === 'surface') add(SHIP_POS.x, SHIP_POS.y, 'EXV Lantern', '#ffb347');
+    if (s.ship.parking.kind === 'surface' && s.ship.parking.locationId === this.id) add(SHIP_POS.x, SHIP_POS.y, 'EXV Lantern', '#ffb347');
     if (Object.values(s.base.pads).some((p) => p.built)) add(BASE_CENTER.x, BASE_CENTER.y, 'Base camp', '#3ee08f');
     for (const z of ZONES) if (s.universe.discovered[z.id] && z.id !== 'moon.crashsite') add(z.center.x, z.center.y, z.name, '#9fe8ff');
     for (const d of s.world[this.id]?.dynamic ?? []) if (d.kind === 'cache') add(d.position[0], d.position[2], 'Your dropped gear', '#ff6464');

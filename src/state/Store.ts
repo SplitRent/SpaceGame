@@ -9,6 +9,7 @@ import {
   type LocationPersistentState,
 } from './GameState';
 import { addItem, countItem, removeItem } from '../gameplay/inventory';
+import { PROPELLANT_CAPACITY } from '../content/shipSystems';
 
 export const PLAYER_INV = 'player';
 
@@ -91,6 +92,7 @@ export class Store {
     }
     if ('scanned' in cond) return !!s.database[cond.scanned];
     if ('discovered' in cond) return !!s.universe.discovered[cond.discovered];
+    if ('propellant' in cond) return s.ship.propellant >= cond.propellant;
     if ('npcAlive' in cond) return !!s.npcs[cond.npcAlive]?.alive;
     if ('relationship' in cond) {
       return (s.npcs[cond.relationship.npc]?.relationship ?? 0) >= cond.relationship.gte;
@@ -324,6 +326,14 @@ export class Store {
     this.events.emit('notify', { text: `Completed: ${def.title}`, kind: 'quest' });
     this.touch('questComplete');
     if (def.rewards) this.grant(`quest:${id}:rewards`, def.rewards);
+  }
+
+  /** Set ship propellant (clamped to tank capacity) and mirror it into the condition flag. */
+  setPropellant(kg: number): void {
+    const s = this.state;
+    s.ship.propellant = Math.max(0, Math.min(PROPELLANT_CAPACITY, kg));
+    this.state.flags['ship.propellant'] = Math.round(s.ship.propellant);
+    this.touch('propellant');
   }
 
   discover(id: string): void {

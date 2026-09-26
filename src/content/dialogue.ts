@@ -265,6 +265,8 @@ export const DIALOGUES: DialogueDef[] = [
       { if: { all: [PRE, { notFlag: 'prologue.lab' }] }, node: 'act0' },
       { if: PRE, node: 'act0b' },
       { if: { all: [{ flag: 'fragment.analyzed' }, { notFlag: 'fragment.discussed' }] }, node: 'fragment' },
+      { if: { all: [{ scanned: 'db.spire' }, { notFlag: 'spire.reported' }] }, node: 'spire' },
+      { if: { questActive: 'mq.footprints' }, node: 'tracks' },
       { if: { questActive: 'mq.kepler' }, node: 'kepler' },
       { if: { questActive: 'mq.bearings' }, node: 'bearings' },
       { if: { questActive: 'mq.ice' }, node: 'ice' },
@@ -273,6 +275,21 @@ export const DIALOGUES: DialogueDef[] = [
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      spire: {
+        id: 'spire', speaker: 'sola',
+        text: 'A spire. Of Blackglass. Standing upright on Mars, keeping the same 1,969-second time as the scar on the Moon… and her tracks lead right up to it and stop?',
+        choices: [
+          { text: 'They stop at the spire. Nothing leads away.', to: 'spire2' },
+          { text: 'What is it, Imani?', to: 'spire2' },
+        ],
+      },
+      spire2: {
+        id: 'spire2', speaker: 'sola',
+        text: 'I don’t know. I don’t think anyone does. But the Moon, Harbor, Melas — every place it touched is keeping the same time. That isn’t damage. That’s a network. And the Cadence is the clock it runs on.',
+        effects: [{ setFlag: 'spire.reported' }, { relationship: { npc: 'sola', delta: 10 } }],
+        next: 'end',
+      },
+      tracks: { id: 'tracks', speaker: 'sola', text: 'Bootprints on Mars that aren’t ours. Follow them before the next storm fills them in. Please.', next: 'end' },
       act0: {
         id: 'act0', speaker: 'sola',
         text: 'Oh good — hands! Put the Apollo 16 core in the analyzer for me? I promised the lunar sample lab a catalogue before we dock. They’ll never let me forget it otherwise.',
@@ -392,12 +409,39 @@ export const DIALOGUES: DialogueDef[] = [
     entries: [
       { if: PRE, node: 'act0' },
       { if: { all: [{ flag: 'office.log.read' }, { notFlag: 'office.told' }] }, node: 'office' },
+      { if: { all: [{ questActive: 'mq.frontier' }, { notFlag: 'frontier.briefed' }] }, node: 'frontier' },
+      { if: { questActive: 'mq.frontier' }, node: 'frontier2' },
       { if: { questActive: 'mq.earthrise' }, node: 'earthrise' },
       { if: { flag: 'earth.called' }, node: 'aftercall' },
       { if: { not: { system: 'power.batteries' } }, node: 'dark' },
       { if: CRASHED, node: 'idle' },
     ],
     nodes: {
+      frontier: {
+        id: 'frontier', speaker: 'haddad',
+        text: 'Earth Control just relayed something. Melas Station — the science outpost in Valles Marineris, on Mars — went dark at 04:12:07. The same second the Blackglass hit Harbor. Two hundred million kilometres apart.',
+        choices: [
+          { text: 'Same second? That’s impossible.', to: 'frontier.b' },
+          { text: 'Who’s at Melas?', to: 'frontier.c' },
+        ],
+      },
+      'frontier.b': {
+        id: 'frontier.b', speaker: 'haddad',
+        text: 'Light takes eleven minutes between here and Mars right now. Nothing we know of does “the same second” across that gap. And their beacon is still pinging on a 1,969-second cycle.',
+        next: 'frontier.c',
+      },
+      'frontier.c': {
+        id: 'frontier.c', speaker: 'haddad',
+        text: 'Four people. And we’re the only crewed deep-space ship in the sky. Earth wants eyes on it. Earth also doesn’t want us home — quarantine, anything the Blackglass touched stays out past the Moon. So: Mars.',
+        choices: [{ text: 'What do we need?', to: 'frontier.d' }],
+      },
+      'frontier.d': {
+        id: 'frontier.d', speaker: 'haddad',
+        text: 'Propellant. The transfer burn is eight hundred kilos, and Kit wants a landing reserve on top — call it a thousand. Harbor’s depot still has hydrolox; Ines will let us drink from it. Then plot the course on the bridge holo table.',
+        effects: [{ setFlag: 'frontier.briefed' }],
+        next: 'end',
+      },
+      frontier2: { id: 'frontier2', speaker: 'haddad', text: 'Melas beacon, still pinging. Still nobody answering it. Let’s go knock.', next: 'end' },
       act0: {
         id: 'act0', speaker: 'haddad',
         text: 'Harbor relays the Cadence for us now. Listen… there. Nineteen hundred and sixty-nine seconds, every single time. Like a lighthouse nobody built.',
@@ -460,6 +504,7 @@ DIALOGUES.push(
     npc: 'carvalho',
     entries: [
       { if: { notFlag: 'harbor.survivors' }, node: 'meet' },
+      { if: { questActive: 'mq.frontier' }, node: 'depot' },
       { if: { always: true }, node: 'after' },
     ],
     nodes: {
@@ -500,6 +545,11 @@ DIALOGUES.push(
         effects: [{ setFlag: 'harbor.survivors' }, { setFlag: 'harbor.burstlog' }, { relationship: { npc: 'carvalho', delta: 20 } }],
         next: 'end',
       },
+      depot: {
+        id: 'depot', speaker: 'carvalho',
+        text: 'Mars? …Of course it’s Mars. The propellant depot is off the lobby — take what you need, the relief ship brings more. And Lantern: come back.',
+        next: 'end',
+      },
       after: {
         id: 'after', speaker: 'carvalho',
         text: 'Earth says a relief ship is four months out. We’ll hold. You go do what you came to do — and come back and tell me what it was.',
@@ -526,6 +576,96 @@ DIALOGUES.push(
   },
 );
 
+/* ------------------------------ Mars ------------------------------ */
+DIALOGUES.push(
+  {
+    id: 'dlg.rao',
+    npc: 'rao',
+    entries: [
+      { if: { notFlag: 'melas.found' }, node: 'meet' },
+      { if: { all: [{ flag: 'melas.power' }, { notFlag: 'melas.debrief' }] }, node: 'debrief' },
+      { if: { notFlag: 'melas.power' }, node: 'waiting' },
+      { if: { always: true }, node: 'after' },
+    ],
+    nodes: {
+      meet: {
+        id: 'meet', speaker: 'rao',
+        text: 'Is — is that a suit light? You’re real. You’re not ours. Who — the Lantern? From the Moon? You came to Mars? …Sorry. Sit. Everything here is cold, including me.',
+        choices: [
+          { text: 'What happened here?', to: 'what' },
+          { text: 'Are you hurt?', to: 'hurt' },
+        ],
+      },
+      hurt: { id: 'hurt', speaker: 'rao', text: 'Cold, hungry, fine. Lucía rationed the heater. We’ve been sitting in this shelter for six sols listening to the walls tick.', next: 'what' },
+      what: {
+        id: 'what', speaker: 'rao',
+        text: '04:12:07. Everything died at once. The feeder cable from the reactor was cut — outside, clean, like a scalpel. And the bus start cells drained to zero in the same instant. We were both in here. Nobody cut it.',
+        choices: [
+          { text: 'Station status says four crew. Where are the others?', to: 'others' },
+          { text: 'I can fix the power.', to: 'fix' },
+        ],
+      },
+      others: {
+        id: 'others', speaker: 'rao',
+        text: 'Kamau and Ishikawa took the rover east, three sols before the blackout, chasing a seismic ping — a quake every thirty-two minutes and forty-nine seconds. They never came back. I don’t know where the rover is.',
+        next: 'fix',
+      },
+      fix: {
+        id: 'fix', speaker: 'rao',
+        text: 'Splice the feeder line outside, between the reactor and the hab — you’ll need a power conduit, there’s a spare in the cabinet by the door. Seat two fresh power cells in the bus, in the power bay. Then restart it. Please.',
+        effects: [{ setFlag: 'melas.found' }, { relationship: { npc: 'rao', delta: 10 } }],
+        next: 'end',
+      },
+      waiting: { id: 'waiting', speaker: 'rao', text: 'Feeder outside, two cells in the bus, then restart. I’d help, but my hands stopped working about a sol ago.', next: 'end' },
+      debrief: {
+        id: 'debrief', speaker: 'rao',
+        text: 'Heat. Light. Thank you. …Now that the archive is up, there’s something you need to see. The external camera, 04:12:07, the instant before it died.',
+        choices: [{ text: 'Show me.', to: 'footage' }],
+      },
+      footage: {
+        id: 'footage', speaker: 'rao',
+        text: 'A figure in a surface suit, walking past the hab. Not one of ours — white, with gold trim. No helmet lamp. It doesn’t look at the camera. It just walks east, toward the canyon wall. Then the feed dies.',
+        choices: [
+          { text: 'White with gold trim… that’s Commander Okonkwo’s suit.', to: 'okonkwo' },
+          { text: 'Could it be one of your missing crew?', to: 'notours' },
+        ],
+      },
+      notours: { id: 'notours', speaker: 'rao', text: 'Our suits are orange. And that suit isn’t an areology rig — look at the mission patch. Is that… an expedition patch? Yours?', next: 'okonkwo' },
+      okonkwo: {
+        id: 'okonkwo', speaker: 'rao',
+        text: 'Your commander vanished near the Moon, and walked past my window on Mars, in the same second? …The tracks will still be out there if the wind hasn’t taken them. East, toward the wall. Go before the next storm.',
+        effects: [{ setFlag: 'melas.debrief' }, { setFlag: 'footprints.revealed' }, { relationship: { npc: 'rao', delta: 10 } }],
+        next: 'end',
+      },
+      after: { id: 'after', speaker: 'rao', text: 'We’ll hold here. Find out what walked past our window — and if you see our rover, bring Kamau and Ishikawa home.', next: 'end' },
+    },
+  },
+  {
+    id: 'dlg.benedetti',
+    npc: 'benedetti',
+    entries: [
+      { if: { notFlag: 'melas.power' }, node: 'cold' },
+      { if: { always: true }, node: 'warm' },
+    ],
+    nodes: {
+      cold: {
+        id: 'cold', speaker: 'benedetti',
+        text: 'Don’t mind me. I’m saving heat by not moving. …That feeder was cut like a laser did it, and there are no lasers on Mars. I checked. Twice.',
+        choices: [
+          { text: 'You’re the engineer?', to: 'eng' },
+          { text: 'Hang on. Help is here.', to: 'end' },
+        ],
+      },
+      eng: { id: 'eng', speaker: 'benedetti', text: 'Lucía Benedetti, station engineer, current occupation: popsicle. Seat the cells cleanly, and let the bus pre-charge before you hit restart. It’ll grumble. That’s normal.', next: 'end' },
+      warm: {
+        id: 'warm', speaker: 'benedetti',
+        text: '¡Agua caliente! You beautiful people. If your ship’s on the pad, the ISRU plant in the power bay can top up your tanks — Melas sits on a lot of buried ice.',
+        next: 'end',
+      },
+    },
+  },
+);
+
 /** Ambient crew lines and banter. Conditions keep them truthful to the current state. */
 export const BARKS: BarkDef[] = [
   { id: 'b.kit.coast', npc: 'arakawa', text: 'Harbor approach in… a while. Moon’s getting big.', if: PRE, reply: { npc: 'okonkwo', text: 'Eyes on your instruments, Mr Arakawa.' } },
@@ -541,5 +681,8 @@ export const BARKS: BarkDef[] = [
   { id: 'b.kit.level', npc: 'arakawa', text: 'Oh, that’s so much better. The floor is a floor again.', if: { system: 'prop.main', step: 'struts' }, once: true },
   { id: 'b.rafi.earth', npc: 'haddad', text: 'Somebody on Earth just asked if we need anything. I said pizza.', if: { flag: 'earth.called' }, once: true, reply: { npc: 'novak', text: 'Tell them vegetables.' } },
   { id: 'b.mira.base', npc: 'castellanos', text: 'Keep an eye on the battery bank when the Sun dips. Night is long.', if: { module: 'solar' }, location: 'moon.south' },
+  { id: 'b.kit.mars', npc: 'arakawa', text: 'Landed on Mars on a ship that crashed on the Moon. Put that on my résumé.', if: { discovered: 'mars.melas' }, once: true, reply: { npc: 'castellanos', text: 'Put “crashed” in small print.' } },
+  { id: 'b.rafi.quarantine', npc: 'haddad', text: 'Earth won’t take us back until they know what the Blackglass is. Fair. Awful, but fair.', if: { questActive: 'mq.frontier' }, once: true },
+  { id: 'b.petra.transit', npc: 'novak', text: 'Seven months compressed into ninety seconds and I still feel it in my knees.', if: { discovered: 'mars.orbit' }, once: true },
   { id: 'b.petra.garden', npc: 'novak', text: 'The tomato has a flower. Don’t tell anyone. I don’t want to jinx it.', if: { module: 'greenhouse' }, location: 'moon.south', once: true },
 ];

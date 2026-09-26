@@ -78,7 +78,7 @@ ok(Math.hypot(pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]) < 1, `shi
 // Fly to Harbor (teleport near the port) and dock with G
 await g(() => {
   const loc = window.__game.currentLocation;
-  const dock = loc.harborDock();
+  const dock = loc.stationDock();
   loc.flight.position.copy(dock).add({ x: 0, y: 0, z: 200 });
   loc.flight.hold();
 });

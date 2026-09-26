@@ -16,6 +16,7 @@ export type Condition =
   | { module: string }
   | { scanned: string }
   | { discovered: string }
+  | { propellant: number }
   | { npcAlive: string }
   | { relationship: { npc: string; gte: number } }
   | { all: Condition[] }

@@ -1,5 +1,6 @@
 import type { Game } from '../Game';
 import type { Location } from './Location';
+import { ZONES } from '../content/zones';
 
 export interface LocationEntry {
   name: string;
@@ -37,7 +38,35 @@ export const LOCATION_REGISTRY: Record<string, LocationEntry> = {
     body: 'moon',
     kind: 'space',
     loadingText: 'Ascending…',
-    create: async (g) => new (await import('./space/CislunarSpace')).CislunarSpace(g),
+    create: async (g) => new (await import('./space/SpaceZone')).SpaceZone(g, ZONES['space.cislunar']),
+  },
+  'space.mars': {
+    name: 'Mars Orbit',
+    body: 'mars',
+    kind: 'space',
+    loadingText: 'Orbit insertion…',
+    create: async (g) => new (await import('./space/SpaceZone')).SpaceZone(g, ZONES['space.mars']),
+  },
+  'space.transit': {
+    name: 'Interplanetary Transit',
+    body: 'sun',
+    kind: 'space',
+    loadingText: 'Taking the helm…',
+    create: async (g) => new (await import('./space/Transit')).Transit(g),
+  },
+  'mars.melas': {
+    name: 'Melas Chasma, Mars',
+    body: 'mars',
+    kind: 'surface',
+    loadingText: 'Stepping onto Mars…',
+    create: async (g) => new (await import('./mars/MarsSurface')).MarsSurface(g),
+  },
+  'mars.station': {
+    name: 'Melas Station',
+    body: 'mars',
+    kind: 'station',
+    loadingText: 'Cycling the station airlock…',
+    create: async (g) => new (await import('./mars/MelasStation')).MelasStation(g),
   },
   'harbor.interior': {
     name: 'Harbor Station',

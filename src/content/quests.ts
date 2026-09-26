@@ -289,6 +289,95 @@ export const QUESTS: QuestDef[] = [
     ],
   },
 
+  /* ============================ ACT 2 · THE FRONTIER ============================ */
+  {
+    id: 'mq.frontier', title: 'The Frontier', kind: 'main', giver: 'haddad',
+    summary: 'Melas Station, a science outpost on Mars, went dark at the same second the Blackglass struck Harbor. We are the only crewed ship that can reach it.',
+    autoStart: { flag: 'slice.complete' },
+    stages: [
+      {
+        id: 'brief', journal: 'Rafi has news from Earth Control.',
+        objectives: [{ id: 'talk', text: 'Talk to Rafi aboard the Lantern', done: { flag: 'frontier.briefed' } }],
+        next: 'fuel',
+      },
+      {
+        id: 'fuel', journal: 'The transfer burn to Mars takes 800 kg of propellant; Kit wants a landing reserve. Harbor’s depot has hydrolox, and base camp can make more from ice.',
+        objectives: [{ id: 'fuel', text: 'Fill the tanks to at least 1,000 kg (Harbor depot or base camp ice)', done: { any: [{ propellant: 1000 }, { flag: 'course.mars' }] } }],
+        next: 'plot',
+      },
+      {
+        id: 'plot', journal: 'Courses are plotted on the holographic star map on the bridge. Transfer burns start from orbit.',
+        objectives: [{ id: 'plot', text: 'Plot a course to Mars at the bridge holo table', done: { any: [{ flag: 'course.mars' }, { discovered: 'mars.orbit' }] } }],
+        next: 'arrive',
+      },
+      {
+        id: 'arrive', journal: 'Seven months of coasting, compressed. Stay at the helm or walk the ship.',
+        objectives: [{ id: 'orbit', text: 'Arrive in Mars orbit', done: { discovered: 'mars.orbit' } }],
+        next: 'land',
+      },
+      {
+        id: 'land', journal: 'Melas Station sits on the floor of Melas Chasma, in the middle of Valles Marineris. Descend below 7 km and land.',
+        objectives: [{ id: 'land', text: 'Land in Melas Chasma', done: { discovered: 'mars.melas' } }],
+        next: 'find',
+      },
+      {
+        id: 'find', journal: 'The station beacon is pinging. Nobody answers it.',
+        objectives: [{ id: 'find', text: 'Find Melas Station’s crew', done: { flag: 'melas.found' } }],
+        next: 'power',
+      },
+      {
+        id: 'power', journal: 'The reactor feeder was cut outside, and the bus start cells drained, in the same instant as Harbor’s blackout.',
+        objectives: [
+          { id: 'cable', text: 'Splice the severed feeder cable outside (Power Conduit)', done: { flag: 'melas.cable' } },
+          { id: 'cells', text: 'Seat 2 power cells in the station bus', done: { flag: 'melas.cells' } },
+          { id: 'restart', text: 'Restart the main bus', done: { flag: 'melas.power' } },
+        ],
+        next: 'debrief',
+      },
+      {
+        id: 'debrief', journal: 'With power back, the station’s external camera archive can be read.',
+        objectives: [{ id: 'rao', text: 'Talk to Dr. Rao', done: { flag: 'melas.debrief' } }],
+        next: 'complete',
+      },
+    ],
+    rewards: [{ relationship: { npc: 'haddad', delta: 5 } }, { notify: 'Melas Station is alive again. Its ISRU plant can refuel the Lantern while she is on the pad.' }],
+  },
+  {
+    id: 'mq.footprints', title: 'Footprints', kind: 'main', giver: 'rao',
+    summary: 'The station camera caught a figure in the commander’s suit walking east at the moment of the blackout.',
+    autoStart: { flag: 'footprints.revealed' },
+    stages: [
+      {
+        id: 'follow', journal: 'The tracks lead east from the station, toward the north canyon wall.',
+        objectives: [{ id: 'follow', text: 'Follow the footprints east', done: { discovered: 'mars.spire' } }],
+        next: 'scan',
+      },
+      {
+        id: 'scan', journal: 'The tracks end at a spire of the same black material as the fragment.',
+        objectives: [{ id: 'scan', text: 'Scan the spire', done: { scanned: 'db.spire' } }],
+        next: 'report',
+      },
+      {
+        id: 'report', journal: 'Imani needs to hear about this.',
+        objectives: [{ id: 'imani', text: 'Tell Imani what you found (aboard the Lantern)', done: { flag: 'spire.reported' } }],
+        next: 'complete',
+      },
+    ],
+  },
+  {
+    id: 'sq.rover', title: 'Kamau and Ishikawa', kind: 'side', giver: 'rao',
+    summary: 'Two of Melas Station’s crew took the rover east chasing a seismic ping, three sols before the blackout.',
+    autoStart: { flag: 'melas.found' },
+    stages: [
+      {
+        id: 'find', journal: 'The rover would have left tracks across the dunes — look south-west of the landing zone too; drivers skirt the dune field.',
+        objectives: [{ id: 'log', text: 'Find the rover and read its drive log', done: { flag: 'rover.log' } }],
+        next: 'complete',
+      },
+    ],
+    rewards: [{ relationship: { npc: 'rao', delta: 5 } }],
+  },
+
   /* ============================ SIDE / CREW ============================ */
   {
     id: 'sq.kit', title: 'Broken Wings', kind: 'crew', giver: 'novak',

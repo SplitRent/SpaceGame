@@ -6,12 +6,15 @@ import { floorTexture, wallTexture, hullPanelTexture } from '../../procgen/textu
 import { InteriorBuilder, type RoomDef } from './interiorKit';
 import { CrewRuntime, type NavGraph, type Spot } from '../../gameplay/crew';
 import { Sky } from '../../render/sky';
-import { createPlanet, type PlanetHandle } from '../../render/planets';
+import { createPlanet, type PlanetHandle, type PlanetKind } from '../../render/planets';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
 import { buildLanternConsoles, type LanternConsoles } from './lanternConsoles';
 import { Rng } from '../../engine/Rng';
 import { damp } from '../../engine/math';
 import { ui } from '../../ui/uiState';
+import { LOCATION_REGISTRY } from '../registry';
+import { ZONES, zoneForStation } from '../../content/zones';
+import { BODIES } from '../../content/bodies';
 
 /** Ship-local layout constants (metres). Deck 2 floor is y=0, deck 3 is y=-4. Bow is -Z. */
 const D3 = -4;
@@ -66,13 +69,19 @@ export class LanternInterior extends Location {
   private listDeg = 0;
   private t = 0;
   private dustMotes: THREE.Points | null = null;
+  private outsideKey = '';
+  private outsideOwned: { dispose(): void }[] = [];
+  private transitPlanet: PlanetHandle | null = null;
 
   constructor(game: Game) {
     const s = game.store.state;
-    const onSurface = s.ship.parking.kind === 'surface' && !!s.flags.crashed;
-    super(game, onSurface ? 1.62 : 9.81);
+    // Parked on a world: that world's gravity. In flight: a documented simplification (1 g).
+    const p = s.ship.parking;
+    const body = p.kind === 'surface' && s.flags.crashed ? LOCATION_REGISTRY[p.locationId]?.body : null;
+    const g = (body && BODIES.find((b) => b.id === body)?.gravity) || 9.81;
+    super(game, g);
     this.env = {
-      gravity: onSurface ? 1.62 : 9.81,
+      gravity: g,
       atmosphere: 'breathable',
       temperatureC: 20,
       radiation: 0,
@@ -254,6 +263,11 @@ export class LanternInterior extends Location {
 
     /* ------------------------------ Outside ---------------------------- */
     this.buildOutside();
+    this.scope.add(() => {
+      this.sky?.dispose();
+      for (const p of this.planets) p.dispose();
+      for (const d of this.outsideOwned) d.dispose();
+    });
 
     /* ---------------------------- Damage FX ---------------------------- */
     if (this.damaged) this.buildDamage(kit);
@@ -351,7 +365,7 @@ export class LanternInterior extends Location {
     }
     // Commander's holo table
     kit.cyl('dark', 0.9, 1.0, 0.95, { x: 0, y: 0.47, z: -28.4 }, undefined, 12);
-    kit.cyl('light', 0.8, 0.8, 0.03, { x: 0, y: 0.96, z: -28.4 }, undefined, 12);
+    kit.cyl('dark', 0.8, 0.8, 0.03, { x: 0, y: 0.96, z: -28.4 }, undefined, 24);
     b.collider(1.8, 1, 1.8, 0, 0.5, -28.4);
     // Jump seats along the aft wall
     for (const x of [-4.5, -3, 3, 4.5]) {
@@ -567,21 +581,41 @@ export class LanternInterior extends Location {
 
   /* ----------------------------- Outside ----------------------------- */
 
-  private buildOutside(): void {
+  /** What the windows should show, derived from where the ship is. */
+  private computeOutsideKey(): string {
     const s = this.game.store.state;
+    const p = s.ship.parking;
+    if (!s.flags.crashed) return 'act0';
+    if (p.kind === 'surface') return `surface:${p.locationId}`;
+    if (p.kind === 'transit') return `transit:${p.to}`;
+    if (p.kind === 'docked') return `space:${zoneForStation(p.locationId)?.id ?? 'space.cislunar'}`;
+    return `space:${p.locationId}`;
+  }
+
+  private buildOutside(): void {
     this.sky?.dispose();
     for (const p of this.planets) p.dispose();
     this.planets = [];
+    this.transitPlanet = null;
+    for (const d of this.outsideOwned) d.dispose();
+    this.outsideOwned = [];
     this.outside.clear();
-    const crashedSurface = !!s.flags.crashed && s.ship.parking.kind === 'surface';
+    this.outside.position.set(0, 0, 0);
+    this.sun = null;
+    const key = (this.outsideKey = this.computeOutsideKey());
+    const [kind, where] = key.split(':');
     this.sky = new Sky({ seed: 77, radius: 4000, earth: false });
     this.scene.add(this.sky.group);
-    if (crashedSurface) {
-      // Lunar landscape seen through the windows (level horizon — the ship is the one tilted)
+    this.scene.background = new THREE.Color('#000');
+    this.scene.fog = null;
+    if (kind === 'surface') {
+      const body = LOCATION_REGISTRY[where]?.body ?? 'moon';
+      const mars = body === 'mars';
+      // Landscape seen through the windows (level horizon — if anything is tilted, it's the ship)
       const geo = new THREE.PlaneGeometry(3000, 3000, 80, 80);
       geo.rotateX(-Math.PI / 2);
       const pos = geo.getAttribute('position') as THREE.BufferAttribute;
-      const rng = new Rng(9);
+      const rng = new Rng(mars ? 23 : 9);
       const bumps = Array.from({ length: 40 }, () => [rng.range(-1500, 1500), rng.range(-1500, 1500), rng.range(20, 160), rng.range(-12, 30)]);
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i), z = pos.getZ(i);
@@ -591,19 +625,19 @@ export class LanternInterior extends Location {
           const d = Math.hypot(x - bx, z - bz) / br;
           if (d < 1.4) h += bh * Math.exp(-d * d * 2);
         }
-        h += Math.max(0, r - 700) * 0.18;
+        // Mars: canyon walls to either side of the ship; Moon: the basin rim.
+        h += mars ? Math.max(0, Math.abs(z) - 500) * 0.9 : Math.max(0, r - 700) * 0.18;
         pos.setY(i, h);
       }
       geo.computeVertexNormals();
-      const mat = new THREE.MeshStandardMaterial({ color: '#8e8b86', roughness: 0.95, flatShading: true });
+      const mat = new THREE.MeshStandardMaterial({ color: mars ? '#a4623c' : '#8e8b86', roughness: 0.95, flatShading: true });
       const ground = new THREE.Mesh(geo, mat);
-      ground.position.y = -7.2;
+      ground.position.y = mars ? -3.6 : -7.2;
       ground.receiveShadow = true;
       this.outside.add(ground);
-      this.scope.own(geo);
-      this.scope.own(mat);
-      this.sun = new THREE.DirectionalLight('#fff6ea', 2.6);
-      this.sun.position.set(80, 12, -40);
+      this.outsideOwned.push(geo, mat);
+      this.sun = new THREE.DirectionalLight(mars ? '#ffe7cc' : '#fff6ea', mars ? 2.0 : 2.6);
+      this.sun.position.set(80, mars ? 60 : 12, -40);
       this.sun.target.position.set(0, 0, 0);
       this.sun.castShadow = this.game.renderer.quality.shadows;
       this.sun.shadow.mapSize.set(2048, 2048);
@@ -612,7 +646,13 @@ export class LanternInterior extends Location {
       this.sun.shadow.bias = -0.0005;
       this.outside.add(this.sun, this.sun.target);
       this.sky.sunDir.copy(this.sun.position).normalize();
-    } else if (!s.flags.crashed) {
+      if (mars) {
+        // Thin CO2 air full of fine dust: a butterscotch sky, no stars by day.
+        this.scene.background = new THREE.Color('#c79a72');
+        this.scene.fog = new THREE.Fog('#c79a72', 300, 2600);
+        this.sky.group.visible = false;
+      }
+    } else if (kind === 'act0') {
       // Act 0: cruising from Earth to the Moon — Moon ahead, Earth behind to port.
       const moon = createPlanet('moon', 260, { segments: 64 });
       moon.group.position.set(-300, 120, -2600);
@@ -621,18 +661,24 @@ export class LanternInterior extends Location {
       this.outside.add(moon.group, earth.group);
       this.planets.push(moon, earth);
       this.sky.sunDir.set(0.8, 0.2, -0.3).normalize();
+    } else if (kind === 'transit') {
+      // Interplanetary cruise: only the destination, growing ahead of the bow.
+      const z = ZONES[where];
+      const dest = createPlanet((z?.planet.kind ?? 'mars') as PlanetKind, 60, { segments: 64 });
+      dest.group.position.set(-150, 40, -3200);
+      this.outside.add(dest.group);
+      this.planets.push(dest);
+      this.transitPlanet = dest;
+      this.sky.sunDir.set(0.6, 0.15, 0.7).normalize();
     } else {
-      // In space after launch
-      const moon = createPlanet('moon', 900, { segments: 96 });
-      moon.group.position.set(0, -1400, -600);
-      this.outside.add(moon.group);
-      this.planets.push(moon);
-      this.sky.sunDir.set(0.8, 0.2, -0.3).normalize();
+      // In orbit around a world
+      const z = ZONES[where] ?? ZONES['space.cislunar'];
+      const planet = createPlanet(z.planet.kind as PlanetKind, 900, { segments: 96 });
+      planet.group.position.set(0, -1400, -600);
+      this.outside.add(planet.group);
+      this.planets.push(planet);
+      this.sky.sunDir.set(...z.sunDir).normalize();
     }
-    this.scope.add(() => {
-      this.sky?.dispose();
-      for (const p of this.planets) p.dispose();
-    });
   }
 
   /* ------------------------------ Damage ----------------------------- */
@@ -724,6 +770,7 @@ export class LanternInterior extends Location {
   override onStateChanged(): void {
     const s = this.game.store.state;
     const sys = s.ship.systems;
+    if (this.outsideKey && this.computeOutsideKey() !== this.outsideKey) this.buildOutside();
     const prev = this.condition;
     this.condition = !s.flags.crashed ? 'intact' : sys['power.reactor']?.online ? 'powered' : sys['power.batteries']?.online ? 'emergency' : 'dead';
     const c = this.condition;
@@ -781,6 +828,8 @@ export class LanternInterior extends Location {
     const cam = this.game.cam.camera;
     this.sky?.update(cam.position, this.t, 1);
     if (this.planets.length) {
+      const tp = this.game.store.state.ship.parking;
+      if (this.transitPlanet && tp.kind === 'transit') this.transitPlanet.group.scale.setScalar(0.25 + 5 * Math.pow(Math.min(1, tp.elapsed / tp.duration), 3));
       for (const p of this.planets) p.update(this.t, this.sky!.sunDir);
       // Keep planets at a fixed offset from the camera (at infinity)
       this.outside.position.copy(cam.position).multiplyScalar(0.98);

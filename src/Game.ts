@@ -22,6 +22,7 @@ import { ToolSystem } from './gameplay/tools';
 import { CraftingSystem } from './gameplay/crafting';
 import { StoryDirector } from './story/StoryDirector';
 import { BaseSystem } from './gameplay/base';
+import { TravelSystem } from './gameplay/travel';
 import { moonSunFactor } from './locations/moon/moonSky';
 import { registerStoryEvents } from './story/storyEvents';
 import { ui, pushNotification, type HudData } from './ui/uiState';
@@ -71,6 +72,7 @@ export class Game {
   readonly crafting: CraftingSystem;
   readonly story: StoryDirector;
   readonly base: BaseSystem;
+  readonly travel: TravelSystem;
   settings: Settings = loadSettings();
   /** Active first-person panel (ship console etc.). */
   panel: PanelController | null = null;
@@ -100,6 +102,7 @@ export class Game {
     this.crafting = new CraftingSystem(this);
     this.story = new StoryDirector(this);
     this.base = new BaseSystem(this.store);
+    this.travel = new TravelSystem(this);
     registerStoryEvents(this);
   }
 
@@ -382,6 +385,7 @@ export class Game {
       this.store.state.meta.playtimeSec += dt;
       this.store.state.clock += sdt;
       this.base.update(sdt, moonSunFactor(this.store.state.clock));
+      this.travel.update(sdt);
 
       if (loc!.mode === 'foot' && this.player.attached) {
         if (input.context === 'gameplay') {
@@ -778,6 +782,7 @@ export class Game {
       stamina: this.suit.stamina,
       temperature: this.suit.readout.temperature,
       pressurized: this.suit.readout.pressurized,
+      atmosphere: loc?.env.atmosphere === 'thin-co2' ? 'CO₂ · 0.006 BAR' : loc?.env.atmosphere === 'toxic' ? 'TOXIC' : 'VACUUM',
       locationName: loc ? LOCATION_REGISTRY[loc.id]?.name ?? loc.name : '',
       objective: q?.objective ?? null,
       questTitle: q?.title ?? null,

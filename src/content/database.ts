@@ -96,4 +96,57 @@ export const DATABASE: DatabaseEntryDef[] = [
     id: 'db.harbor', title: 'Harbor Station', category: 'technology', tier: 1,
     text: 'Cislunar staging station in a near-rectilinear halo orbit over the lunar south pole. Docking for four vessels, a small hotel of a crew, and — until recently — the relay for the Cadence.',
   },
+  /* ------------------------------ Mars ------------------------------ */
+  {
+    id: 'db.mars', title: 'Mars', category: 'astronomy', tier: 1,
+    text: 'The fourth planet: half Earth’s diameter, 38% of its gravity, with an atmosphere of carbon dioxide at under 1% of Earth’s surface pressure. Iron oxide dust colours it red. Ancient river valleys, lakebeds and minerals that only form in water show it was once wetter and warmer. Its day, the sol, is 24 hours 39 minutes.',
+    onScan: [{ discover: 'mars' }],
+  },
+  {
+    id: 'db.aresrelay', title: 'Ares Relay 2 (derelict)', category: 'technology', tier: 1,
+    text: 'A communications relay in Mars orbit, dead since the Melas blackout. Its solar wings are intact; its avionics bus is not. Every relay in Mars orbit failed at 04:12:07.',
+  },
+  {
+    id: 'db.melas', title: 'Melas Station', category: 'technology', tier: 1,
+    text: 'A four-person science outpost on the floor of Melas Chasma, studying the canyon’s layered sediments. Powered by a small fission reactor; water from buried ice. Went dark at 04:12:07 — the same second as Harbor Station.',
+  },
+  {
+    id: 'db.marsregolith', title: 'Martian Regolith', category: 'geology', tier: 1,
+    text: 'Fine basaltic dust and sand, stained by iron oxides. It contains perchlorate salts — toxic to people and a useful oxidiser — so habitats wash it off suits before it comes inside.',
+    yields: [{ item: 'regolith', qty: 3 }],
+  },
+  {
+    id: 'db.layers', title: 'Layered Sulfate & Clay Deposits', category: 'geology', tier: 1,
+    text: 'The canyon walls of Valles Marineris expose kilometres of layered rock. In Melas Chasma, orbiters have mapped hydrated sulfates and clays — minerals that form in water — deposited when parts of the canyon held lakes.',
+  },
+  {
+    id: 'db.marsbasalt', title: 'Martian Basalt', category: 'geology', tier: 1,
+    text: 'Dark volcanic rock, the bedrock of most of Mars. The dark dunes on the canyon floor are made of its weathered grains, pushed along by thin but persistent winds.',
+  },
+  {
+    id: 'db.hematite', title: 'Hematite Concretions', category: 'geology', tier: 1,
+    text: 'Small grey spheres of iron oxide, like the “blueberries” the Opportunity rover found at Meridiani Planum. They grow inside sediments soaked by groundwater — evidence of Mars’s wet past.',
+  },
+  {
+    id: 'db.marsice', title: 'Exposed Ground Ice', category: 'geology', tier: 1,
+    text: 'Orbiters have photographed steep scarps where thick sheets of nearly pure water ice lie just below the surface of Mars. In the shade of this bluff it survives; in sunlight it slowly sublimates straight into the thin air.',
+    yields: [{ item: 'ice', qty: 2 }],
+  },
+  {
+    id: 'db.kilopower', title: 'Fission Surface Power Unit', category: 'technology', tier: 1,
+    text: 'A compact fission reactor with Stirling converters and a radiator skirt, the kind first tested on Earth as “Kilopower”. Ten kilowatts, day and night, dust storm or not — the reason Melas Station could exist at all.',
+  },
+  {
+    id: 'db.cablecut', title: 'Severed Feeder Cable', category: 'anomaly', tier: 1,
+    text: 'The cut is perfectly planar, the conductor surfaces mirror-smooth and cold. No heat damage, no tool marks, no debris. Whatever did this did not touch anything else.',
+  },
+  {
+    id: 'db.rover', title: 'Melas Pressurised Rover', category: 'technology', tier: 1,
+    text: 'Six-wheeled pressurised rover, tipped on its side at the edge of a gully. Hatch open. No bodies, no suits. Its drive log survives.',
+  },
+  {
+    id: 'db.spire', title: 'Blackglass Spire', category: 'anomaly', tier: 1,
+    text: 'A faceted column of the same zero-reflectance material as the lunar fragment, eleven metres tall, perfectly vertical, standing on bare canyon floor with no impact scar around it. It emits a pulse every 1,969 seconds, in phase with the scar on the Moon. The footprints end at its base.',
+    onScan: [{ setFlag: 'spire.scanned' }],
+  },
 ];

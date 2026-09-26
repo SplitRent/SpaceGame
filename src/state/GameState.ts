@@ -54,7 +54,9 @@ export interface ShipSystemState {
 export type ShipParking =
   | { kind: 'surface'; locationId: string }
   | { kind: 'space'; locationId: string; position: Vec3; quat: [number, number, number, number] }
-  | { kind: 'docked'; locationId: string; portId: string };
+  | { kind: 'docked'; locationId: string; portId: string }
+  /** Interplanetary cruise between two space zones; progresses with the game clock. */
+  | { kind: 'transit'; locationId: 'space.transit'; from: string; to: string; elapsed: number; duration: number };
 
 export interface ShipState {
   name: string;

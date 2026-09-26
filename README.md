@@ -38,15 +38,20 @@ Other scripts:
 | Inventory · Journal · Map | Tab/I · J · M |
 | Pause | Esc / P |
 | Quicksave · Quickload | F6 · F9 |
-| Ship flight | W/S throttle · A/D strafe · Space/C up/down · Q/E roll · mouse steer · Z flight assist · X leave seat |
+| Ship flight | W/S throttle · A/D strafe · Space/C up/down · Q/E roll · mouse steer · Shift boost · Z flight assist · T target · G dock / land / tractor salvage · F scan target · X leave seat |
 
 Ship systems are always operated in first person: walk up to a console and press E, then
-click its physical buttons, switches and screens.
+click its physical buttons, switches and screens. **Interplanetary travel** is plotted on the
+holographic star map at the bridge holo table (reactor power, ship in orbit); take off from a
+surface with the pilot seat's flight deck key.
 
 ## Dev shortcuts
 
 `http://localhost:5173/?start=moon` (post-crash on the Moon), `?start=ship`, `?start=rich`
-(base-building sandbox), `&quality=low` for weak GPUs. Press `` ` `` for the debug overlay.
+(base-building sandbox), `?start=frontier` (Act 2 start, in lunar orbit, ready to plot a
+course), `?start=transit`, `?start=marsorbit`, `?start=mars` (landed in Melas Chasma),
+`?start=melas` (inside Melas Station); `&quality=low` for weak GPUs. Press `` ` `` for the
+debug overlay.
 
 ## Assets & licences
 

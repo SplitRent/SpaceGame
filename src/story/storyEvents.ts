@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import type { Game } from '../Game';
 import { CinematicPlayer, type Shot } from '../cinematics/Cinematic';
-import { ui } from '../ui/uiState';
+import { ui, pushNotification } from '../ui/uiState';
+import { ZONES, zoneForStation, zoneForSurface } from '../content/zones';
+import { ASCENT_COST } from '../content/shipSystems';
 
 /**
  * Story beats raised by content effects ({ story: id }) or by systems coming online.
@@ -159,7 +161,64 @@ export function registerStoryEvents(game: Game): void {
     store.setFlag('cine.mode', 'launch');
     await game.locations.travel({ location: 'cinematic.opening' }, { label: '', holdBlack: true, fadeTime: 0.8 });
   });
+  /** Take the helm: where that leads depends on where the ship is. */
   story.on('helm', async () => {
-    await game.locations.travel({ location: 'space.cislunar', spawn: 'helm' }, { label: 'Taking the helm…', fadeTime: 0.4 });
+    const p = store.state.ship.parking;
+    if (p.kind === 'transit') {
+      await game.locations.travel({ location: 'space.transit', spawn: 'helm' }, { label: 'Taking the helm…', fadeTime: 0.4 });
+    } else if (p.kind === 'space') {
+      await game.locations.travel({ location: p.locationId, spawn: 'helm' }, { label: 'Taking the helm…', fadeTime: 0.4 });
+    } else if (p.kind === 'docked') {
+      const z = zoneForStation(p.locationId);
+      if (z) await game.locations.travel({ location: z.id, spawn: 'undock' }, { label: 'Releasing docking clamps…', fadeTime: 0.4 });
+    } else {
+      // Take-off from a surface: a real propellant cost for climbing out of the gravity well.
+      const z = zoneForSurface(p.locationId);
+      const cost = ASCENT_COST[z?.body ?? 'moon'] ?? 200;
+      if (!z) return;
+      if (store.state.ship.propellant < cost) {
+        pushNotification(`Take-off needs ${cost} kg of propellant (${Math.round(store.state.ship.propellant)} kg aboard).`, 'warn');
+        game.audio.play('error');
+        return;
+      }
+      store.setPropellant(store.state.ship.propellant - cost);
+      game.audio.play('powerUp');
+      game.cam.addShake(0.6);
+      await game.locations.travel({ location: z.id, spawn: 'ascent' }, { label: `Main engine start… lift-off. Climbing to orbit (−${cost} kg).`, fadeTime: 0.8 });
+    }
+  });
+
+  /* -------------------------------- Transit -------------------------------- */
+  story.on('transit.depart', () => {
+    const p = store.state.ship.parking;
+    if (p.kind !== 'transit') return;
+    if (p.to === 'space.mars' && !store.state.flags['said.depart.mars']) {
+      store.setFlag('said.depart.mars', true);
+      say([
+        ['Arakawa', 'Burn complete. Trans-Mars injection nominal. We are officially the farthest crewed ship from Earth.'],
+        ['Castellanos', 'Seven months of coasting, squeezed into a nap. Somebody check the coffee supply.'],
+        ['Haddad', 'Melas, Lantern. We’re coming. Hold on.'],
+      ]);
+    } else say([['Arakawa', 'Burn complete. Coasting.']]);
+    pushNotification(`Course plotted: ${ZONES[p.to]?.name ?? p.to}. Take the helm, or walk the ship while we coast.`, 'info');
+  });
+  story.on('transit.half', () => {
+    const p = store.state.ship.parking;
+    if (p.kind !== 'transit') return;
+    say(p.to === 'space.mars'
+      ? [['Sola', 'Halfway. Look back — Earth and the Moon are one blue star and one grey one now.'], ['Novak', 'Everybody drink water. I mean it.']]
+      : [['Arakawa', 'Halfway there.']]);
+  });
+  story.on('transit.arrive', () => {
+    const s = store.state;
+    const p = s.ship.parking;
+    if (p.kind === 'space' && p.locationId === 'space.mars' && !s.flags['said.arrive.mars']) {
+      store.setFlag('said.arrive.mars', true);
+      say([
+        ['Arakawa', 'Orbit insertion complete. Mars, everyone.'],
+        ['Sola', 'Valles Marineris. Four thousand kilometres of canyon. Melas Chasma is right in the middle of it.'],
+        ['Haddad', 'Still nothing from Melas Station. Their beacon’s alive. Nobody’s answering it.'],
+      ]);
+    }
   });
 }

@@ -16,6 +16,15 @@ describe('save / load', () => {
     if (res.ok) expect(res.state).toEqual(store.state);
   });
 
+  it('round-trips a ship in interplanetary transit', () => {
+    const { store } = makeStore();
+    store.state.ship.parking = { kind: 'transit', locationId: 'space.transit', from: 'space.cislunar', to: 'space.mars', elapsed: 42.5, duration: 90 };
+    const file = buildSaveFile(store.state, 'slot1', 'Test', null, 'Transit');
+    const res = parseSaveFile(JSON.parse(JSON.stringify(file)));
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.state.ship.parking).toEqual(store.state.ship.parking);
+  });
+
   it('rejects tampered or corrupted saves', () => {
     const { store } = makeStore();
     const file = buildSaveFile(store.state, 'slot1', 'Test', null, 'Moon');

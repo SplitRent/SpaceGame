@@ -59,17 +59,78 @@ export function scenarioState(id: string): GameState {
     case 'harbor':
       completeUpTo(s, 'all');
       s.flags.launched = true;
+      {
+        const def = CONTENT.quests['mq.ascent'];
+        s.quests['mq.ascent'] = { status: 'completed', stage: def.stages[def.stages.length - 1].id, progress: {}, history: def.stages.map((x) => x.id) };
+        s.granted['quest:mq.ascent:rewards'] = true;
+      }
       s.flags['harbor.approached'] = true;
       s.flags['harbor.docked'] = true;
       s.ship.parking = { kind: 'docked', locationId: 'harbor.interior', portId: 'dock' };
       s.player.locationId = 'harbor.interior';
       s.player.spawnId = 'dock';
       break;
+    case 'frontier':
+      postSlice(s);
+      s.ship.parking = { kind: 'space', locationId: 'space.cislunar', position: [0, 0, 0], quat: [0, 0, 0, 1] };
+      s.player.locationId = 'lantern.interior';
+      s.player.spawnId = 'bridge';
+      break;
+    case 'transit':
+      postSlice(s);
+      s.flags['course.mars'] = true;
+      s.ship.propellant = 800;
+      s.ship.parking = { kind: 'transit', locationId: 'space.transit', from: 'space.cislunar', to: 'space.mars', elapsed: 75, duration: 90 };
+      s.player.locationId = 'space.transit';
+      s.player.spawnId = 'helm';
+      break;
+    case 'marsorbit':
+      postSlice(s);
+      s.flags['course.mars'] = true;
+      s.ship.propellant = 800;
+      s.ship.parking = { kind: 'space', locationId: 'space.mars', position: [0, -34000, 0], quat: [0, 0, 0, 1] };
+      s.player.locationId = 'space.mars';
+      s.player.spawnId = 'helm';
+      break;
+    case 'mars':
+    case 'melas':
+      postSlice(s);
+      s.flags['course.mars'] = true;
+      s.universe.discovered['mars.orbit'] = true;
+      s.universe.discovered['space.mars'] = true;
+      s.ship.propellant = 650;
+      s.ship.parking = { kind: 'surface', locationId: 'mars.melas' };
+      s.inventories.player.stacks = [{ itemId: 'conduit', qty: 1 }, { itemId: 'powercell', qty: 2 }, { itemId: 'o2canister', qty: 2 }];
+      if (id === 'melas') {
+        s.universe.discovered['mars.melas'] = true;
+        s.player.locationId = 'mars.station';
+        s.player.spawnId = 'airlock';
+      } else {
+        s.player.locationId = 'mars.melas';
+        s.player.spawnId = 'ramp';
+      }
+      break;
     default:
       s.player.locationId = 'moon.south';
       s.player.spawnId = 'ramp';
   }
   return s;
+}
+
+/** State right after the vertical slice: launched, Harbor reached, Act 2 begun and briefed. */
+function postSlice(s: GameState): void {
+  completeUpTo(s, 'all');
+  s.meta.chapter = 'Act 2 — The Frontier';
+  for (const f of ['launched', 'orbit.placed', 'harbor.approached', 'harbor.docked', 'harbor.undocked', 'harbor.survivors', 'harbor.burstlog', 'slice.complete', 'scar.pulse', 'frontier.briefed', 'hint.flight', 'hint.ship']) s.flags[f] = true;
+  for (const d of ['harbor', 'moon.orbit', 'harbor.interior']) s.universe.discovered[d] = true;
+  for (const q of ['mq.ascent', 'mq.harbor']) {
+    const def = CONTENT.quests[q];
+    s.quests[q] = { status: 'completed', stage: def.stages[def.stages.length - 1].id, progress: {}, history: def.stages.map((x) => x.id) };
+    s.granted[`quest:${q}:rewards`] = true;
+  }
+  s.granted['story.launch'] = true;
+  s.ship.propellant = 1600;
+  s.flags['ship.propellant'] = 1600;
 }
 
 /** Mark ship systems repaired/online up to a milestone (dev/test only). */

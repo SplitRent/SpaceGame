@@ -102,4 +102,24 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.wren',
     presence: [{ if: FLOWN, location: 'harbor.interior', spot: 'harbor.quarters', activity: 'sit' }],
   },
+  {
+    id: 'rao', name: 'Dr. Anand Rao', role: 'Melas Station Lead Areologist',
+    bio: 'Has spent four years reading the canyon walls like a book. Soft-spoken, stubborn, and very cold.',
+    suitColor: '#e8742e', accentColor: '#f4f1ea', skinTone: '#8a5a3c', hairColor: '#2a2420', height: 1.71,
+    dialogue: 'dlg.rao',
+    presence: [
+      { if: { flag: 'melas.power' }, location: 'mars.station', spot: 'melas.commons', activity: 'work' },
+      { if: { always: true }, location: 'mars.station', spot: 'melas.shelter.a', activity: 'sit' },
+    ],
+  },
+  {
+    id: 'benedetti', name: 'Lucía Benedetti', role: 'Melas Station Engineer',
+    bio: 'Keeps a hab running 200 million kilometres from spare parts. Talks to machines, and they listen.',
+    suitColor: '#e8742e', accentColor: '#3a3f46', skinTone: '#d9a882', hairColor: '#4a2a1a', height: 1.63,
+    dialogue: 'dlg.benedetti',
+    presence: [
+      { if: { flag: 'melas.power' }, location: 'mars.station', spot: 'melas.lab', activity: 'work' },
+      { if: { always: true }, location: 'mars.station', spot: 'melas.shelter.b', activity: 'idle' },
+    ],
+  },
 ];

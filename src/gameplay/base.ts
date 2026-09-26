@@ -106,8 +106,7 @@ export class BaseSystem {
           this.iceTimer = 0;
           store.batch('iceproc', () => {
             store.setFlag('iceproc.hopper', hopper - 1);
-            s.ship.propellant += PROPELLANT_PER_ICE;
-            store.setFlag('ship.propellant', Math.round(s.ship.propellant));
+            store.setPropellant(s.ship.propellant + PROPELLANT_PER_ICE);
           });
         }
       }

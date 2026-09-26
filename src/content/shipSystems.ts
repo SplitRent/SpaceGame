@@ -75,3 +75,11 @@ export const SHIP_SYSTEMS: ShipSystemDef[] = [
 
 /** Propellant needed for lunar ascent to orbit (kg). */
 export const LAUNCH_PROPELLANT = 1200;
+
+/** Total hydrolox tank capacity (kg). */
+export const PROPELLANT_CAPACITY = 2400;
+
+/** Propellant for leaving each world's surface to its orbit zone (kg). */
+export const ASCENT_COST: Record<string, number> = { moon: 150, mars: 450 };
+/** Propellant for a powered descent (Mars aerobrakes most of the way). */
+export const DESCENT_COST: Record<string, number> = { moon: 100, mars: 150 };

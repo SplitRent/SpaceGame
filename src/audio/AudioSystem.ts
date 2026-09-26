@@ -3,7 +3,7 @@
  * stingers are synthesised. Environments sound different (vacuum = suit/contact sounds
  * only; ship = machinery & ventilation). CC0 samples can later be layered on top.
  */
-export type AmbienceId = 'none' | 'vacuum' | 'ship' | 'ship-dead' | 'station' | 'space' | 'cinematic';
+export type AmbienceId = 'none' | 'vacuum' | 'mars' | 'ship' | 'ship-dead' | 'station' | 'space' | 'cinematic';
 export type Sfx =
   | 'step' | 'stepMetal' | 'jump' | 'land' | 'click' | 'beep' | 'confirm' | 'error' | 'pickup'
   | 'door' | 'airlock' | 'alarm' | 'impact' | 'scan' | 'scanDone' | 'mine' | 'craft' | 'switch'
@@ -317,6 +317,13 @@ export class AudioSystem {
         layerNoise(500, 0.7, 0.02, 'bandpass');
         layerTone(58, 0.015);
         layerNoise(900, 0.8, 0.035, 'bandpass', 0.22);
+        break;
+      case 'mars':
+        // Suit hum and breathing, plus thin, low Martian wind (as InSight heard it: quiet and deep)
+        layerNoise(500, 0.7, 0.018, 'bandpass');
+        layerNoise(900, 0.8, 0.03, 'bandpass', 0.22);
+        layerNoise(220, 0.4, 0.06, 'lowpass', 0.06);
+        layerNoise(90, 0.6, 0.05, 'lowpass', 0.03);
         break;
       case 'ship':
         layerNoise(180, 0.5, 0.08);

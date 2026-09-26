@@ -82,7 +82,7 @@ export function Hud() {
           {!inPanel && ui.crosshair.value && <div class={`crosshair ${prompt ? 'active' : ''}`} />}
           <div class="vitals">
             <div class="suit-status">
-              SUIT · {h.pressurized ? <b>PRESSURIZED</b> : <b class="v">VACUUM</b>} · {Math.round(h.temperature)}°C
+              SUIT · {h.pressurized ? <b>PRESSURIZED</b> : <b class="v">{h.atmosphere}</b>} · {Math.round(h.temperature)}°C
             </div>
             <Vital label="O₂" value={h.oxygen} max={h.oxygenMax} color="#7fd3ff" />
             <Vital label="PWR" value={h.suitPower} max={h.suitPowerMax} color="#ffc857" />

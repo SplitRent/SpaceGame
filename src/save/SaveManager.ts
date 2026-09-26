@@ -70,6 +70,7 @@ export const GameStateSchema = z.object({
       z.object({ kind: z.literal('surface'), locationId: z.string() }),
       z.object({ kind: z.literal('space'), locationId: z.string(), position: vec3, quat: z.tuple([z.number(), z.number(), z.number(), z.number()]) }),
       z.object({ kind: z.literal('docked'), locationId: z.string(), portId: z.string() }),
+      z.object({ kind: z.literal('transit'), locationId: z.literal('space.transit'), from: z.string(), to: z.string(), elapsed: z.number(), duration: z.number() }),
     ]),
   }),
   base: z.object({

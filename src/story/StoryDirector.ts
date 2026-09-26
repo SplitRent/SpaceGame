@@ -57,18 +57,31 @@ export class StoryDirector {
 
   onDialogueEnd(): void {
     const store = this.game.store;
+    this.checkChapterBeats();
     // End of the vertical slice: Harbor reached and survivors found.
     if (store.state.flags['harbor.survivors'] && !store.state.flags['slice.complete']) {
       store.setFlag('slice.complete', true);
-      store.state.meta.chapter = 'Act 2 — The Frontier (coming next)';
+      store.state.meta.chapter = 'Act 2 — The Frontier';
       this.game.audio.stinger('wonder');
-      ui.title.value = { text: 'End of Act 1', sub: 'The Frontier awaits — you can keep exploring the Moon, orbit and Harbor' };
+      ui.title.value = { text: 'End of Act 1', sub: 'Act 2 — The Frontier. Talk to Rafi.' };
       setTimeout(() => (ui.title.value = null), 9000);
       void this.game.autosave('Harbor Station');
     }
   }
 
   beforeSave(): void {}
+
+  /** Chapter beat: the spire reported (current end of the authored story). */
+  checkChapterBeats(): void {
+    const store = this.game.store;
+    if (store.state.flags['spire.reported'] && !store.state.flags['chapter.spire']) {
+      store.setFlag('chapter.spire', true);
+      this.game.audio.stinger('wonder');
+      ui.title.value = { text: 'A Network', sub: 'Every place the Blackglass touched keeps the same time. To be continued.' };
+      setTimeout(() => (ui.title.value = null), 9000);
+      void this.game.autosave('The Spire');
+    }
+  }
 
   /** The objective shown on the HUD: tracked quest, else first active main quest. */
   currentObjective(): ObjectiveView | null {

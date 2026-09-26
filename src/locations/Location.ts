@@ -38,7 +38,7 @@ export interface LocationEnv {
   /** Radiation dose multiplier (1 = nominal space background). */
   radiation: number;
   /** Ambience profile id for the audio system. */
-  ambience: 'vacuum' | 'ship' | 'ship-dead' | 'station' | 'space' | 'cinematic';
+  ambience: 'vacuum' | 'mars' | 'ship' | 'ship-dead' | 'station' | 'space' | 'cinematic';
 }
 
 export interface SpawnPoint {

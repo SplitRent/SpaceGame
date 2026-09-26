@@ -30,6 +30,8 @@ export interface HudData {
   stamina: number;
   temperature: number;
   pressurized: boolean;
+  /** Outside-air label when not pressurized (VACUUM, CO₂ 0.006 bar…). */
+  atmosphere: string;
   locationName: string;
   objective: string | null;
   questTitle: string | null;

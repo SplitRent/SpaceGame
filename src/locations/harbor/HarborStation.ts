@@ -9,6 +9,7 @@ import { createPlanet, type PlanetHandle } from '../../render/planets';
 import { Sky } from '../../render/sky';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
 import { pushNotification } from '../../ui/uiState';
+import { PROPELLANT_CAPACITY } from '../../content/shipSystems';
 
 /**
  * Harbor Station habitation ring (spin gravity ≈ 0.5 g): docking port and airlock, the
@@ -143,7 +144,7 @@ export class HarborStation extends Location {
     this.registerInteractable({
       id: 'harbor.elevator', object: elev, kind: 'use', prompt: () => 'Spoke elevator to the hub',
       detail: () => 'LOCKED OUT — hub in microgravity, no power',
-      interact: () => pushNotification('The elevator is locked out. The hub will have to wait for Act 2.', 'info'),
+      interact: () => pushNotification('The elevator is locked out until the hub has power.', 'info'),
     });
 
     // Supply locker: resupply (once)
@@ -161,6 +162,28 @@ export class HarborStation extends Location {
           st.give('medpatch', 2);
           st.give('powercell', 1);
         });
+      },
+    });
+
+    // Propellant depot: Harbor's hydrolox reserve, pumped across the docking port.
+    const depot = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.8, 1.4), new THREE.MeshStandardMaterial({ color: '#3a3f46', emissive: '#4fd1ff', emissiveIntensity: 0.25 }));
+    depot.position.set(5.6, 0.9, -3.6);
+    this.frame.add(depot);
+    this.physics.addBox(new THREE.Vector3(5.6, 0.9, -3.6), new THREE.Vector3(0.3, 0.9, 0.7));
+    this.registerInteractable({
+      id: 'harbor.depot', object: depot, kind: 'use', prompt: () => 'Propellant depot — refuel the Lantern',
+      available: () => !!game.store.state.flags['harbor.survivors'],
+      detail: () => `Lantern tanks ${Math.round(game.store.state.ship.propellant)} / ${PROPELLANT_CAPACITY} kg`,
+      interact: () => {
+        const st = game.store;
+        if (st.state.ship.parking.kind !== 'docked') return;
+        if (st.state.ship.propellant >= PROPELLANT_CAPACITY - 1) {
+          pushNotification('The Lantern’s tanks are already full.', 'info');
+          return;
+        }
+        st.setPropellant(PROPELLANT_CAPACITY);
+        game.audio.play('confirm');
+        pushNotification(`Pumping hydrolox across the port… tanks full: ${PROPELLANT_CAPACITY} kg.`, 'info');
       },
     });
 
