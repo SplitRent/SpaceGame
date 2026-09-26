@@ -12,7 +12,7 @@ export type Action =
   | 'interact' | 'cycleView' | 'scan' | 'primary' | 'secondary' | 'toolNext'
   | 'inventory' | 'journal' | 'map' | 'pause' | 'quicksave' | 'quickload'
   | 'up' | 'down' | 'rollLeft' | 'rollRight' | 'boost' | 'flightAssist' | 'exitSeat' | 'flashlight'
-  | 'skip' | 'debug';
+  | 'skip' | 'debug' | 'dock' | 'target';
 
 export const DEFAULT_BINDINGS: Record<Action, string[]> = {
   forward: ['KeyW', 'ArrowUp'],
@@ -43,6 +43,8 @@ export const DEFAULT_BINDINGS: Record<Action, string[]> = {
   exitSeat: ['KeyX'],
   flashlight: ['KeyL'],
   skip: ['Space', 'Enter'],
+  dock: ['KeyG'],
+  target: ['KeyT'],
   debug: ['Backquote'],
 };
 

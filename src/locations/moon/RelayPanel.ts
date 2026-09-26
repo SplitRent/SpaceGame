@@ -101,6 +101,11 @@ export class RelayPanel extends PanelController {
 
   protected override onClose(): void {
     this.screen.dispose();
+    this.panel.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      (m.material as THREE.Material | undefined)?.dispose?.();
+    });
     this.panel.removeFromParent();
   }
 }

@@ -23,6 +23,7 @@ import { CraftingSystem } from './gameplay/crafting';
 import { StoryDirector } from './story/StoryDirector';
 import { BaseSystem } from './gameplay/base';
 import { moonSunFactor } from './locations/moon/moonSky';
+import { registerStoryEvents } from './story/storyEvents';
 import { ui, pushNotification, type HudData } from './ui/uiState';
 import type { GameState } from './state/GameState';
 import { clamp } from './engine/math';
@@ -99,6 +100,7 @@ export class Game {
     this.crafting = new CraftingSystem(this);
     this.story = new StoryDirector(this);
     this.base = new BaseSystem(this.store);
+    registerStoryEvents(this);
   }
 
   async boot(canvas: HTMLCanvasElement): Promise<void> {
@@ -263,9 +265,11 @@ export class Game {
     this.audio.setVacuum(loc.env.atmosphere === 'vacuum');
     this.store.locationState(loc.id).visited = true;
     s.player.locationId = loc.id;
+    if (target.spawn) s.player.spawnId = target.spawn;
     if (loc.mode === 'foot') {
       const { pos, yaw, spawnId } = this.resolveSpawn(loc, target);
       this.player.attach(loc.physics, loc.scene, pos, yaw);
+      this.player.setLamp(this.suit.headlamp);
       this.player.controlEnabled = true;
       s.player.spawnId = spawnId;
       s.player.position = [pos.x, pos.y, pos.z];
@@ -429,7 +433,7 @@ export class Game {
       }
       if (input.justPressed('flashlight', 'gameplay')) {
         this.suit.headlamp = !this.suit.headlamp;
-        this.player.model.setHeadLamp(this.suit.headlamp);
+        this.player.setLamp(this.suit.headlamp);
         this.audio.play('switch', 0.5);
       }
     }

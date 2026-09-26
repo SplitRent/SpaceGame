@@ -35,9 +35,16 @@ function Compass({ yaw }: { yaw: number }) {
 }
 
 function FlightHud({ h }: { h: NonNullable<HudData['flight']> }) {
+  const markers = ui.markers.value;
   return (
     <div class="flight">
       <div class="reticle" />
+      {markers.map((m, i) => (
+        <div key={i} class={`marker ${m.selected ? 'sel' : ''} ${m.behind ? 'behind' : ''}`} style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}>
+          <span class="diamond">◇</span>
+          <span class="ml">{m.label} · {m.dist}</span>
+        </div>
+      ))}
       <div class="left">
         <div class="cap">VELOCITY</div>
         <div class="big">{h.speed.toFixed(0)} m/s</div>

@@ -34,7 +34,11 @@ export class ToolSystem {
     this.workTarget = null;
     this.workProgress = 0;
     this.scanHud = null;
-    this.beam?.removeFromParent();
+    if (this.beam) {
+      this.beam.removeFromParent();
+      this.beam.geometry.dispose();
+      (this.beam.material as THREE.Material).dispose();
+    }
     this.beam = null;
   }
 

@@ -108,6 +108,8 @@ export const ui = {
   hint: signal<string | null>(null),
   panelHelp: signal<string | null>(null),
   bootError: signal<string | null>(null),
+  /** Screen-space flight markers (0..1 coords). */
+  markers: signal<{ x: number; y: number; label: string; dist: string; selected: boolean; behind: boolean }[]>([]),
 };
 
 let nid = 1;

@@ -1,0 +1,165 @@
+import * as THREE from 'three';
+import type { Game } from '../Game';
+import { CinematicPlayer, type Shot } from '../cinematics/Cinematic';
+import { ui } from '../ui/uiState';
+
+/**
+ * Story beats raised by content effects ({ story: id }) or by systems coming online.
+ * Handlers present the moment (subtitles, music, camera) and apply state changes in
+ * idempotent ways, so replaying or skipping never duplicates anything.
+ */
+export function registerStoryEvents(game: Game): void {
+  const story = game.story;
+  const store = game.store;
+
+  /** Queue lines of dialogue as subtitles (radio-filtered when in vacuum). */
+  const say = (lines: [string, string, number?][]) => {
+    let delay = 0;
+    for (const [speaker, text, dur = 4.2] of lines) {
+      setTimeout(() => {
+        const vac = game.currentLocation?.env.atmosphere === 'vacuum' || !game.currentLocation?.isPressurized(game.player.head());
+        if (vac) game.audio.play('radio', 0.5);
+        ui.subtitle.value = { speaker, text };
+      }, delay * 1000);
+      delay += dur;
+    }
+    setTimeout(() => (ui.subtitle.value = null), delay * 1000);
+  };
+  (story as any).say = say;
+
+  /* ------------------------------ Act 0 → crash ------------------------------ */
+  story.on('catastrophe', async () => {
+    const loc = game.currentLocation as any;
+    if (!loc || loc.id !== 'lantern.interior') return;
+    const player = new CinematicPlayer(game);
+    const w = (x: number, y: number, z: number) => loc.shipToWorld(new THREE.Vector3(x, y, z));
+    const shots: Shot[] = [
+      { duration: 4, from: { pos: w(-2.5, 1.7, -25.5), target: w(0, 1.8, -40), fov: 55 }, to: { pos: w(-1.5, 1.7, -27), target: w(0, 1.9, -40), fov: 55 }, subtitle: { speaker: 'Arakawa', text: 'Harbor, Lantern. On final. Beautiful morning up here.' } },
+      {
+        duration: 4, from: { pos: w(0, 1.8, -30), target: w(0, 2.2, -45), fov: 50 },
+        onStart: () => loc.spawnBlackglass?.(),
+        subtitle: { speaker: 'Haddad', text: 'Contact, bearing zero-one-zero… no. That’s not a contact. That’s a hole.' },
+      },
+      {
+        duration: 3, from: { pos: w(0, 1.8, -30), target: w(0, 2.2, -45), fov: 58 },
+        onStart: () => {
+          game.audio.play('alarm');
+          game.audio.play('explosion');
+          game.cam.addShake(1.3);
+          loc.setCatastropheVisual?.(true);
+          ui.fadeColor.value = '#e8f0ff';
+          void game.fadeTo(0.85, 0.08).then(() => game.fadeTo(0, 0.6));
+        },
+        subtitle: { speaker: 'Okonkwo', text: 'BRACE! Everyone, brace!' },
+      },
+      {
+        duration: 3, from: { pos: w(0.5, 1.4, -26), target: w(-3, 1.2, -32), fov: 62 },
+        onStart: () => { game.cam.addShake(1.5); game.audio.play('powerDown'); },
+        onUpdate: (k) => { if (k > 0.5) { ui.fadeColor.value = '#000'; void game.fadeTo(1, 0.8); } },
+        subtitle: { speaker: 'Castellanos', text: 'We’ve lost everything — power, attitude, everything!' },
+      },
+    ];
+    await player.play(shots, {
+      skippable: true,
+      onEnd: async () => {
+        store.setFlag('cine.mode', 'crash');
+        ui.fadeColor.value = '#000';
+        await game.locations.travel({ location: 'cinematic.opening' }, { label: '', holdBlack: true, fadeTime: 0.3 });
+      },
+    });
+  });
+
+  /* ------------------------------ Act 1 beats ------------------------------ */
+  story.on('batteries.online', () => {
+    game.audio.stinger('quest');
+    say([
+      ['Castellanos', 'Lights! Oh, I could kiss this ship.'],
+      ['Haddad', 'Consoles are waking up. Harbor still isn’t answering.'],
+      ['Castellanos', 'One thing at a time. Next: air.'],
+    ]);
+  });
+  story.on('repressurized', () => {
+    game.audio.stinger('wonder');
+    store.state.meta.chapter = 'Act 1 — Stranded';
+    say([
+      ['Novak', 'Pressure is holding. One hundred and one kilopascals. Helmets off, everyone.'],
+      ['Arakawa', 'Oh, that’s — that smells terrible. That smells wonderful.'],
+      ['Novak', 'Breathe. Go on. All of you.'],
+    ]);
+    void game.autosave('Air restored');
+  });
+  story.on('reactor.online', () => {
+    game.audio.stinger('launch');
+    game.cam.addShake(0.4);
+    say([
+      ['Castellanos', 'Core is critical — the good kind of critical. Sixty kilowatts and climbing.'],
+      ['Sola', 'Every light on the ship just came on. Every one.'],
+      ['Castellanos', 'She’s alive. Now we can start thinking about the sky.'],
+    ]);
+    void game.autosave('Reactor online');
+  });
+  story.on('comms.short.online', () => {
+    say([
+      ['Haddad', 'Short range is up. Suits can talk to the ship again.'],
+      ['Haddad', 'Harbor… nothing. Earth… below the horizon. We need a higher place to shout from.'],
+    ]);
+  });
+  story.on('fragment.analyzed', () => {
+    game.audio.stinger('danger');
+    say([['Sola', 'Come to the lab. Now. Please — I need someone to tell me I’m reading this wrong.']]);
+  });
+  story.on('earth.call', () => {
+    if (store.state.flags['earth.called']) {
+      say([['Earth Control', 'Lantern, we hear you. Hold on. We’re working on it.']]);
+      return;
+    }
+    game.audio.stinger('wonder');
+    say([
+      ['You', 'Earth Control, this is the EXV Lantern. Do you read?', 4],
+      ['', '…', 2.5],
+      ['Earth Control', 'Lantern — Lantern, we read you! We read you! Stand by… stand by…', 5],
+      ['Earth Control', 'We lost Harbor Station at the same second we lost you. Two relay satellites went dark with it.', 5.5],
+      ['Earth Control', 'Status of your crew?', 3],
+      ['You', 'Five of six. The commander is missing. We’re on the far side, south pole. We’re repairing the ship.', 5.5],
+      ['Earth Control', 'Copy five of six. …Lantern, the nearest rescue vehicle is months out. Whatever you’re doing — keep doing it.', 6],
+      ['Earth Control', 'And Lantern? Harbor’s beacon came back on four hours ago. Automatic. Nobody here triggered it.', 6],
+    ]);
+    store.batch('earthcall', () => {
+      store.setFlag('earth.called', true);
+      store.discover('earth.contact');
+    });
+    void game.autosave('Earth contact');
+  });
+  story.on('ship.level', async () => {
+    game.cam.addShake(1.0);
+    game.audio.play('powerUp');
+    game.audio.play('impact', 0.5);
+    say([['Castellanos', 'Port struts extending… she’s coming up… hold on… LEVEL. Floor is a floor again.']]);
+    store.state.ship.listDeg = 0;
+    store.markChanged('level');
+    const loc = game.currentLocation;
+    if (loc?.id === 'lantern.interior') {
+      await game.locations.travel({ location: 'lantern.interior', spawn: 'engineering' }, { label: 'The Lantern groans as she settles level…', fadeTime: 0.6 });
+    }
+  });
+
+  /* --------------------------------- Launch --------------------------------- */
+  story.on('launch', async () => {
+    if (store.state.flags.launched) return;
+    game.audio.play('powerUp');
+    game.cam.addShake(0.5);
+    say([
+      ['Arakawa', 'Pre-launch complete. All stations report.'],
+      ['Castellanos', 'Engineering go.'],
+      ['Sola', 'Science go. Bring us home. Well — up.'],
+      ['Novak', 'Medical go. Everyone’s strapped in, even Kit.'],
+      ['Haddad', 'Comms go. Earth is listening.'],
+    ]);
+    await new Promise((r) => setTimeout(r, 9000));
+    store.setFlag('cine.mode', 'launch');
+    await game.locations.travel({ location: 'cinematic.opening' }, { label: '', holdBlack: true, fadeTime: 0.8 });
+  });
+  story.on('helm', async () => {
+    await game.locations.travel({ location: 'space.cislunar', spawn: 'helm' }, { label: 'Taking the helm…', fadeTime: 0.4 });
+  });
+}

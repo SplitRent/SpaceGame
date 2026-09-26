@@ -71,7 +71,6 @@ export class Astronaut {
   private materials: THREE.Material[] = [];
   private visorMat: THREE.MeshStandardMaterial;
   private lampMat: THREE.MeshStandardMaterial;
-  readonly headLamp: THREE.SpotLight | null = null;
 
   /* animation state */
   private phase = 0;
@@ -138,14 +137,7 @@ export class Astronaut {
     add(this.helmet, box(0.08 * s, 0.05 * s, 0.05 * s), metal, 0.15 * s, 0.24 * s, 0.05 * s);
     const lampMesh = add(this.helmet, box(0.05 * s, 0.03 * s, 0.03 * s), this.lampMat, -0.15 * s, 0.24 * s, 0.08 * s);
     lampMesh.castShadow = false;
-    if (opts.headLamp) {
-      const lamp = new THREE.SpotLight('#fff3dc', 0, 45, 0.55, 0.6, 1.2);
-      lamp.position.set(-0.15 * s, 0.24 * s, 0.1 * s);
-      lamp.target.position.set(-0.15 * s, 0.1 * s, 3);
-      lamp.castShadow = false;
-      this.helmet.add(lamp, lamp.target);
-      (this as { headLamp: THREE.SpotLight | null }).headLamp = lamp;
-    }
+    void opts;
 
     this.headBare = new THREE.Group();
     this.neck.add(this.headBare);
@@ -202,7 +194,6 @@ export class Astronaut {
 
   setHeadLamp(on: boolean): void {
     this.lampMat.emissiveIntensity = on ? 4 : 0;
-    if (this.headLamp) this.headLamp.intensity = on ? 60 : 0;
   }
 
   /** Hide head geometry (first-person camera inside helmet). */

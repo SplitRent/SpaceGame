@@ -136,6 +136,12 @@ export abstract class Location {
   }
 }
 
+/** Detach an object and dispose everything it owns (non-shared). */
+export function disposeObject(obj: THREE.Object3D): void {
+  obj.removeFromParent();
+  disposeScene(obj);
+}
+
 /** Dispose all geometries/materials/textures reachable from a scene. */
 export function disposeScene(root: THREE.Object3D): void {
   const geos = new Set<THREE.BufferGeometry>();

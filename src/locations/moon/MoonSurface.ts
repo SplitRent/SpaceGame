@@ -254,8 +254,9 @@ export class MoonSurface extends Location {
     this.fill = new THREE.HemisphereLight('#7b8aa3', '#3b3a38', 0.12);
     scene.add(this.fill);
 
-    // ---- The Lantern ----
-    this.buildShip();
+    // ---- The Lantern (only if she is parked here) ----
+    const shipHere = store.state.ship.parking.kind === 'surface';
+    if (shipHere) this.buildShip();
 
     // ---- Rocks ----
     const rockMat = new THREE.MeshStandardMaterial({ color: '#8e8b86', roughness: 0.95, flatShading: true });
@@ -308,9 +309,9 @@ export class MoonSurface extends Location {
     // ---- Spawns ----
     const shipWorld = (v: THREE.Vector3) => v.clone().applyMatrix4(this.shipRoot.matrixWorld);
     this.shipRoot.updateMatrixWorld(true);
-    const rampFoot = shipWorld(this.ship.anchors.ramp).add(new THREE.Vector3(5, 0, 0));
+    const rampFoot = shipHere ? shipWorld(this.ship.anchors.ramp).add(new THREE.Vector3(5, 0, 0)) : new THREE.Vector3(BASE_CENTER.x - 30, 0, BASE_CENTER.y);
     rampFoot.y = hf.heightAt(rampFoot.x, rampFoot.z) + 0.1;
-    const airlockOut = shipWorld(this.ship.anchors.airlock).add(new THREE.Vector3(3.5, 0, 0));
+    const airlockOut = shipHere ? shipWorld(this.ship.anchors.airlock).add(new THREE.Vector3(3.5, 0, 0)) : rampFoot.clone();
     airlockOut.y = hf.heightAt(airlockOut.x, airlockOut.z) + 0.1;
     this.spawns = {
       ramp: { id: 'ramp', position: rampFoot, yaw: -Math.PI / 2 },
@@ -339,11 +340,15 @@ export class MoonSurface extends Location {
   }
 
   private buildShip(): void {
-    this.ship = buildLantern({ damaged: true, power: 0, landed: true });
+    const st = this.game.store.state;
+    const hullFixed = !!st.ship.systems['prop.main']?.steps['hull'] || !!st.flags.launched;
+    this.ship = buildLantern({ damaged: !hullFixed, power: 0, landed: true });
     this.shipRoot.add(this.ship.group);
     const baseY = this.hf.heightAt(SHIP_POS.x, SHIP_POS.y);
-    this.shipRoot.position.set(SHIP_POS.x, baseY - 1.3, SHIP_POS.y);
-    this.shipRoot.rotation.set(0.012, 0, SHIP_ROLL);
+    const roll = THREE.MathUtils.degToRad(st.ship.listDeg);
+    // Leveled ship stands on extended struts; crashed ship lies in its bed.
+    this.shipRoot.position.set(SHIP_POS.x, baseY - (roll > 0 ? 1.3 : -0.2) + (roll > 0 ? 0 : 30 * Math.tan(SHIP_ROLL) * 0.5), SHIP_POS.y);
+    this.shipRoot.rotation.set(roll > 0 ? 0.012 : 0, 0, roll);
     this.scene.add(this.shipRoot);
     this.scope.add(() => this.ship.dispose());
     this.ship.group.traverse((o) => {

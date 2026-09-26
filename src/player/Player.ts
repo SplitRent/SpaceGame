@@ -49,6 +49,9 @@ export class Player {
   private lastPos = new THREE.Vector3();
   private stepTimer = 0;
   onFootstep: ((lowG: boolean) => void) | null = null;
+  /** Helmet lamp: follows the view direction (not the helmet mesh, which is hidden in 1st person). */
+  readonly lamp = new THREE.SpotLight('#fff3dc', 0, 40, 0.6, 0.7, 1.2);
+  lampOn = false;
 
   constructor() {
     this.model = new Astronaut({ ...PLAYER_LOOK }, { headLamp: true });
@@ -82,6 +85,7 @@ export class Player {
     this.pitch = 0;
     this.airTime = 0;
     scene.add(this.model.root);
+    scene.add(this.lamp, this.lamp.target);
     this.syncModel();
   }
 
@@ -98,6 +102,14 @@ export class Player {
     this.collider = null;
     this.physics = null;
     this.model.root.removeFromParent();
+    this.lamp.removeFromParent();
+    this.lamp.target.removeFromParent();
+  }
+
+  setLamp(on: boolean): void {
+    this.lampOn = on;
+    this.model.setHeadLamp(on);
+    this.lamp.intensity = on ? 130 : 0;
   }
 
   get attached(): boolean {
@@ -222,6 +234,11 @@ export class Player {
   }
 
   private syncModel(): void {
+    const head = this.head();
+    const dir = this.lookDir();
+    const side = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
+    this.lamp.position.copy(head).addScaledVector(side, -0.18).add(new THREE.Vector3(0, 0.12, 0));
+    this.lamp.target.position.copy(head).addScaledVector(dir, 8);
     this.model.root.position.copy(this.position);
     this.model.root.rotation.y = this.yaw + Math.PI;
     this.model.lookPitch = -this.pitch * 0.6;

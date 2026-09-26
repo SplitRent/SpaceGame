@@ -90,6 +90,7 @@ export class Store {
       return Object.values(s.base.pads).some((p) => p.built && p.moduleId === cond.module);
     }
     if ('scanned' in cond) return !!s.database[cond.scanned];
+    if ('discovered' in cond) return !!s.universe.discovered[cond.discovered];
     if ('npcAlive' in cond) return !!s.npcs[cond.npcAlive]?.alive;
     if ('relationship' in cond) {
       return (s.npcs[cond.relationship.npc]?.relationship ?? 0) >= cond.relationship.gte;

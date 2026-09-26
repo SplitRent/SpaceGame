@@ -165,3 +165,9 @@ select, input[type=text] { background: #0e1822; color: var(--text); border: 1px 
 .flight .throttle i { position: absolute; bottom: 0; left: 0; right: 0; background: var(--amber); }
 .death { text-align: center; }
 .death h2 { color: var(--danger); }
+
+.marker { position: absolute; transform: translate(-50%, -50%); font-size: 12px; color: rgba(143,227,255,0.7); white-space: nowrap; text-shadow: 0 1px 2px #000; display: flex; flex-direction: column; align-items: center; }
+.marker .diamond { font-size: 18px; line-height: 18px; }
+.marker.sel { color: var(--amber); }
+.marker.sel .diamond { font-size: 24px; }
+.marker.behind { opacity: 0.45; }

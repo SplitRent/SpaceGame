@@ -2,6 +2,7 @@ import type { NpcDef } from './types';
 
 const CRASHED = { flag: 'crashed' } as const;
 const PRE = { notFlag: 'crashed' } as const;
+const FLOWN = { flag: 'launched' } as const;
 
 /**
  * Crew definitions. Presence is a *function of state*: the first matching rule decides
@@ -26,8 +27,8 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.arakawa',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'bridge.pilot', activity: 'sit' },
-      { if: { questDone: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.pilot', activity: 'sit' },
-      { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.pilot', activity: 'sit' },
+      { if: FLOWN, location: 'lantern.interior', spot: 'bridge.nav', activity: 'work' },
+      { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.nav', activity: 'idle' },
       { if: { flag: 'kit.walking' }, location: 'lantern.interior', spot: 'bridge.pilot', activity: 'work' },
       { if: { flag: 'kit.treated' }, location: 'lantern.interior', spot: 'medbay.bed', activity: 'sit' },
       { if: CRASHED, location: 'lantern.interior', spot: 'medbay.bed', activity: 'injured' },
@@ -40,6 +41,7 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.castellanos',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'eng.console', activity: 'work' },
+      { if: FLOWN, location: 'lantern.interior', spot: 'bridge.eng', activity: 'work' },
       { if: { all: [{ questActive: 'mq.ascent' }] }, location: 'lantern.interior', spot: 'bridge.eng', activity: 'work' },
       { if: { all: [{ questActive: 'mq.reactor' }] }, location: 'lantern.interior', spot: 'eng.reactor', activity: 'work' },
       { if: { module: 'workbench' }, location: 'moon.south', spot: 'base.workbench', activity: 'work', schedule: [0.1, 0.45] },
@@ -53,6 +55,7 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.sola',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'lab.bench', activity: 'work' },
+      { if: FLOWN, location: 'lantern.interior', spot: 'bridge.science', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.science', activity: 'work' },
       { if: { module: 'lab' }, location: 'moon.south', spot: 'base.lab', activity: 'work', schedule: [0.5, 0.95] },
       { if: { system: 'life.hull', step: 'breach.lab' }, location: 'lantern.interior', spot: 'lab.bench', activity: 'work' },
@@ -66,6 +69,7 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.novak',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'medbay.station', activity: 'work' },
+      { if: FLOWN, location: 'lantern.interior', spot: 'medbay.station', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.medic', activity: 'idle' },
       { if: { module: 'greenhouse' }, location: 'moon.south', spot: 'base.greenhouse', activity: 'work', schedule: [0.55, 0.9] },
       { if: CRASHED, location: 'lantern.interior', spot: 'medbay.station', activity: 'work' },
@@ -78,9 +82,24 @@ export const NPCS: NpcDef[] = [
     dialogue: 'dlg.haddad',
     presence: [
       { if: PRE, location: 'lantern.interior', spot: 'bridge.comms', activity: 'sit' },
+      { if: FLOWN, location: 'lantern.interior', spot: 'bridge.comms', activity: 'work' },
       { if: { questActive: 'mq.ascent' }, location: 'lantern.interior', spot: 'bridge.comms', activity: 'sit' },
       { if: { questActive: 'mq.earthrise' }, location: 'moon.south', spot: 'base.center', activity: 'work' },
       { if: CRASHED, location: 'lantern.interior', spot: 'bridge.comms', activity: 'work' },
     ],
+  },
+  {
+    id: 'carvalho', name: 'Ines Carvalho', role: 'Harbor Station Manager',
+    bio: 'Ran Harbor for six years. Kept two people alive through four dark hours with a flashlight and a very firm voice.',
+    suitColor: '#dfe3e8', accentColor: '#3fa9f5', skinTone: '#c9956c', hairColor: '#5a3b24', height: 1.69,
+    dialogue: 'dlg.carvalho',
+    presence: [{ if: FLOWN, location: 'harbor.interior', spot: 'harbor.ops', activity: 'work' }],
+  },
+  {
+    id: 'wren', name: 'Tomasz Wren', role: 'Harbor Systems Technician',
+    bio: 'Twenty-three, first rotation off Earth. Has not slept since the lights went out.',
+    suitColor: '#dfe3e8', accentColor: '#f2c94c', skinTone: '#f1c9a5', hairColor: '#d8c08a', height: 1.83,
+    dialogue: 'dlg.wren',
+    presence: [{ if: FLOWN, location: 'harbor.interior', spot: 'harbor.quarters', activity: 'sit' }],
   },
 ];

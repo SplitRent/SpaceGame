@@ -15,6 +15,7 @@ export type Condition =
   | { system: string; online?: boolean; step?: string }
   | { module: string }
   | { scanned: string }
+  | { discovered: string }
   | { npcAlive: string }
   | { relationship: { npc: string; gte: number } }
   | { all: Condition[] }

@@ -33,6 +33,7 @@ export class StoryDirector {
   async playOpening(): Promise<void> {
     const { game } = this;
     game.store.setFlag('act0', true);
+    game.store.setFlag('cine.mode', 'opening');
     await game.locations.travel({ location: 'cinematic.opening' }, { label: '', holdBlack: true, fadeTime: 0.01 });
   }
 
@@ -54,7 +55,18 @@ export class StoryDirector {
     ui.subtitle.value = null;
   }
 
-  onDialogueEnd(): void {}
+  onDialogueEnd(): void {
+    const store = this.game.store;
+    // End of the vertical slice: Harbor reached and survivors found.
+    if (store.state.flags['harbor.survivors'] && !store.state.flags['slice.complete']) {
+      store.setFlag('slice.complete', true);
+      store.state.meta.chapter = 'Act 2 — The Frontier (coming next)';
+      this.game.audio.stinger('wonder');
+      ui.title.value = { text: 'End of Act 1', sub: 'The Frontier awaits — you can keep exploring the Moon, orbit and Harbor' };
+      setTimeout(() => (ui.title.value = null), 9000);
+      void this.game.autosave('Harbor Station');
+    }
+  }
 
   beforeSave(): void {}
 
