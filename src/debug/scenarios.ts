@@ -32,6 +32,11 @@ export function scenarioState(id: string): GameState {
         { itemId: 'electronics', qty: 10 }, { itemId: 'relaykit', qty: 1 }, { itemId: 'ice', qty: 20 },
       ];
       break;
+    case 'powered':
+      completeUpTo(s, 'reactor');
+      s.player.locationId = 'lantern.interior';
+      s.player.spawnId = 'engineering';
+      break;
     case 'k9':
       completeUpTo(s, 'reactor');
       s.player.locationId = 'moon.kepler9';

@@ -66,6 +66,8 @@ export class Input {
   private wantsLock = false;
   /** Set when we release the lock ourselves, so the async pointerlockchange isn't mistaken for Esc. */
   private expectUnlock = false;
+  /** Time of the last lock/unlock/context operation we initiated (events can arrive out of order). */
+  private lastLockOp = 0;
   /** Called when the pointer lock is lost unexpectedly (e.g. the player pressed Esc). */
   onUnexpectedUnlock: (() => void) | null = null;
   readonly scope = new Scope('input');
@@ -118,6 +120,8 @@ export class Input {
         this.expectUnlock = false;
         return;
       }
+      // Lock/unlock requests settle asynchronously; only a loss during steady gameplay means Esc.
+      if (performance.now() - this.lastLockOp < 900) return;
       if (this.wantsLock && (this.context === 'gameplay' || this.context === 'flight')) this.onUnexpectedUnlock?.();
     });
   }
@@ -155,6 +159,7 @@ export class Input {
   }
 
   private updateLock(): void {
+    this.lastLockOp = performance.now();
     const ctx = this.context;
     // Panels use a free cursor to click physical controls; gameplay/flight capture the mouse.
     this.wantsLock = ctx === 'gameplay' || ctx === 'flight';
@@ -164,6 +169,7 @@ export class Input {
 
   requestLock(): void {
     if (document.pointerLockElement === this.canvas) return;
+    this.lastLockOp = performance.now();
     try {
       const p = this.canvas.requestPointerLock() as unknown as Promise<void> | undefined;
       p?.catch?.(() => undefined);

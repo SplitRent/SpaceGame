@@ -728,13 +728,13 @@ export class LanternInterior extends Location {
     this.condition = !s.flags.crashed ? 'intact' : sys['power.reactor']?.online ? 'powered' : sys['power.batteries']?.online ? 'emergency' : 'dead';
     const c = this.condition;
     const level = c === 'intact' || c === 'powered' ? 1 : c === 'emergency' ? 0.35 : 0;
-    this.lightPanels.emissiveIntensity = level * 2.2;
+    this.lightPanels.emissiveIntensity = level * 1.6;
     this.lightPanels.color.set(level > 0 ? '#f4f6ff' : '#2a2c30');
-    for (const l of this.pointLights) l.intensity = level * (c === 'emergency' ? 70 : 160);
+    for (const l of this.pointLights) l.intensity = level * (c === 'emergency' ? 55 : 85);
     const dead = c === 'dead';
     this.emergencyMat.emissiveIntensity = dead ? 1.6 : c === 'emergency' ? 0.5 : 0;
     for (const l of this.emergencyLights) l.intensity = dead ? 22 : c === 'emergency' ? 6 : 0;
-    this.hemi.intensity = dead ? 0.14 : 0.2 + level * 0.5;
+    this.hemi.intensity = dead ? 0.14 : 0.18 + level * 0.3;
     this.hemi.color.set(dead ? '#7a4a44' : '#dfe8ff');
     this.reactorGlow.emissiveIntensity = c === 'powered' || c === 'intact' ? 2.2 : 0;
     this.env.ambience = dead ? 'ship-dead' : 'ship';
