@@ -87,7 +87,7 @@ Living ecosystems (forests, wildlife) arrive with fictional worlds after Pluto (
 
 ## 7. The ship — EXV Lantern
 
-~180 m landing-capable expedition ship, three decks:
+~150 m landing-capable expedition ship (belly-lander), three decks:
 
 - **Deck 1 Command:** bridge (pilot seat + cockpit screens, nav, comms, sensors/science, commander station), observation blister, commander's office.
 - **Deck 2 Habitation:** spine corridor, common area/galley, cabins, med bay, science lab, workshop, suit room, main airlock.
@@ -210,3 +210,13 @@ Every repair is a **physical procedure** (diagnose at console → obtain/craft p
 | 2026-09-26 | Stack: Vite + TypeScript + three.js + Rapier; libraries welcome if installable via `npm install`. |
 | 2026-09-26 | On-foot and flight cameras: 3-view cycle (first-person / behind / front). Ship systems always first-person; walking to consoles preferred. |
 | 2026-09-26 | Assets: procedural baseline; optional CC0 packs via `npm run assets:fetch` on the player's machine. |
+| 2026-09-26 | Names (still revisable): EXV Lantern; Harbor Station (halo orbit over the lunar south pole); the Blackglass (the lightless object); the Cadence (repeat period exactly 1,969 s); Aurora Point Spaceport; Outpost Kepler-9. |
+| 2026-09-26 | Crew: Okonkwo (commander, missing), Arakawa (pilot, injured), Castellanos (engineer), Sola (scientist), Novak (medic), Haddad (comms). Harbor survivors: Carvalho, Wren. |
+| 2026-09-26 | Crash site: far-side-facing south polar basin. Earth is hidden by the basin rim everywhere except Earthrise Summit — verified by a real terrain line-of-sight test; the first sighting triggers a visor zoom. |
+| 2026-09-26 | Lunar day compressed to 2 h real time; the Sun circles the horizon at ≤10.5° elevation and dips below it briefly (night = batteries, cold, stars). |
+| 2026-09-26 | Gravity: 1/6 g on and inside the landed ship on the Moon; 1 g gameplay simplification aboard in flight; ~0.5 g spin gravity in Harbor's habitat ring. |
+| 2026-09-26 | Space scale: local flight zones in metres with compressed distances; a background render layer in kilometres shows the Moon at true scale and Earth at 1/10 distance and size (identical angular size). |
+| 2026-09-26 | Combat is tool-based: hostile survey drones are disabled by overriding their firmware with the multi-tool, not shot. |
+| 2026-09-26 | Death: respawn at the recovery point (ship medbay or base habitat); non-quest suit contents drop into a persistent, recoverable cache (merged, never destroyed). |
+| 2026-09-26 | Electric RCS always works without propellant (slow), so the player can never be stranded in orbit. |
+| 2026-09-26 | Vertical slice ends at Harbor Station with the survivors' revelation (automatic restart, an empty airlock cycling, an unscheduled outbound transmission toward the Cadence's source). |
