@@ -262,12 +262,71 @@ export function registerStoryEvents(game: Game): void {
     } else say([['Arakawa', 'Burn complete. Coasting.']]);
     pushNotification(`Course plotted: ${ZONES[p.to]?.name ?? p.to}. Take the helm, or walk the ship while we coast.`, 'info');
   });
+  /** Mid-cruise encounters: one per route, each a small moment with a database entry. */
+  const TRANSIT_EVENTS: Record<string, { lines: [string, string][]; note: string; db: string; shake?: number; flash?: string; hull?: number }> = {
+    'space.mars': {
+      lines: [['Novak', 'Solar particle event! Everyone behind the water tanks on Deck 3 — now, please.'], ['Castellanos', 'Water’s the best shield we’ve got. Ten minutes and it’s over.'], ['Novak', '…Dose within limits. Everybody drink water. I mean it.']],
+      note: 'Solar particle event: the crew sheltered behind the water tanks. Dose within limits.', db: 'db.spe', shake: 0.25, flash: '#fff4d0',
+    },
+    'space.cislunar': {
+      lines: [['Sola', 'Halfway. Earth and the Moon are two stars now — one blue, one grey — getting closer.']],
+      note: 'Earth and the Moon: a double star, growing.', db: 'db.earthmoon',
+    },
+    'space.ceres': {
+      lines: [['Arakawa', 'Proximity alert — asteroid, three hundred metres across, passing at four kilometres. It’s just… going by.'], ['Sola', 'Scanning! Oh — it’s a rubble pile. A flying heap of gravel held together by almost nothing.']],
+      note: 'Close pass: rubble-pile asteroid 2031 QX, 4 km. Scanned.', db: 'db.flyby', shake: 0.1,
+    },
+    'space.jupiter': {
+      lines: [['Haddad', 'Comms are full of static. Jupiter’s magnetosphere — we’re inside it already, twenty million kilometres out.'], ['Sola', 'Look at the hull cameras. The ship is glowing. It’s an aurora — on us.']],
+      note: 'Inside Jupiter’s magnetosphere: an aurora plays over the hull.', db: 'db.aurora', flash: '#9ab8ff',
+    },
+    'space.saturn': {
+      lines: [['Arakawa', 'Crossing the ring plane. The rings are ten metres thick in places, and we are going through the gap. Hold on to something.'], ['Castellanos', 'Ice pinging off the hull. Little ones. …Mostly little ones.']],
+      note: 'Ring-plane crossing: minor ice impacts on the hull.', db: 'db.rings', shake: 0.5, hull: 0.01,
+    },
+    'space.pluto': {
+      lines: [['Haddad', 'Contact, twenty million kilometres off the bow. It’s… New Horizons. Silent since the 2040s, still flying outward.'], ['Okonkwo', 'Dip the lights. It came all this way first.']],
+      note: 'Passed New Horizons, drifting silent toward the stars.', db: 'db.newhorizons',
+    },
+    'space.threshold': {
+      lines: [['Haddad', 'The Cadence is loud now. The hull is humming with it. Every 1,969 seconds, everything on the ship rings.'], ['Okonkwo', 'It knows we’re coming. It has always known.']],
+      note: 'The Cadence rings through the hull.', db: 'db.cadence', shake: 0.3, flash: '#b8a8ff',
+    },
+    'space.venus': {
+      lines: [['Castellanos', 'Sun’s twice as bright out here. Tiles are holding at four hundred degrees on the sunward side.']],
+      note: 'Thermal shield holding under double sunlight.', db: 'db.innersun', flash: '#fff8e0',
+    },
+    'space.mercury': {
+      lines: [['Arakawa', 'The Sun is three times wider than at home. I’ve got the ship turned so the tiles take it. Don’t look out of the starboard windows.']],
+      note: 'Sunward attitude: the thermal shield takes seven times Earth’s sunlight.', db: 'db.innersun', flash: '#fff8e0',
+    },
+    'space.earth': {
+      lines: [['Novak', 'There she is.'], ['Haddad', 'Earth Control is on the line. They’re… cheering. The whole room.']],
+      note: 'Earth, growing ahead.', db: 'db.earth',
+    },
+  };
   story.on('transit.half', () => {
     const p = store.state.ship.parking;
     if (p.kind !== 'transit') return;
-    say(p.to === 'space.mars'
-      ? [['Sola', 'Halfway. Look back — Earth and the Moon are one blue star and one grey one now.'], ['Novak', 'Everybody drink water. I mean it.']]
-      : [['Arakawa', 'Halfway there.']]);
+    const ev = TRANSIT_EVENTS[p.to];
+    if (!ev) {
+      say([['Arakawa', 'Halfway there.']]);
+      return;
+    }
+    say(ev.lines);
+    pushNotification(ev.note, 'discovery');
+    if (ev.shake) game.cam.addShake(ev.shake);
+    if (ev.hull) store.state.ship.hull = Math.max(0.3, store.state.ship.hull - ev.hull);
+    if (ev.flash) {
+      ui.fadeColor.value = ev.flash;
+      void game.fadeTo(0.45, 0.12).then(() => game.fadeTo(0, 1.2)).then(() => (ui.fadeColor.value = '#000'));
+    }
+    const s = store.state;
+    if (!s.database[ev.db] && store.content.database[ev.db]) {
+      s.database[ev.db] = { at: s.clock };
+      store.markChanged('transit.event');
+      pushNotification(`Database: ${store.content.database[ev.db].title}`, 'discovery');
+    }
   });
   story.on('transit.arrive', () => {
     const s = store.state;

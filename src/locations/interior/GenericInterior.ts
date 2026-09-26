@@ -3,7 +3,7 @@ import { Location } from '../Location';
 import type { Game } from '../../Game';
 import { KitBuilder, stdMat } from '../../procgen/kit';
 import { floorTexture, wallTexture } from '../../procgen/textures';
-import { InteriorBuilder } from '../lantern/interiorKit';
+import { InteriorBuilder, navFromRooms } from '../lantern/interiorKit';
 import { CrewRuntime, type Spot } from '../../gameplay/crew';
 import { registerPoiInteract } from '../poiInteract';
 import { pushNotification } from '../../ui/uiState';
@@ -163,7 +163,7 @@ export class GenericInterior extends Location {
     if (d.spots.length) {
       const spots: Record<string, Spot> = {};
       for (const s of d.spots) spots[s.id] = { position: new THREE.Vector3(s.x, 0, s.z), yaw: s.yaw };
-      this.crew = new CrewRuntime(game, this, spots, (_x, _z, fb) => fb);
+      this.crew = new CrewRuntime(game, this, spots, (_x, _z, fb) => fb, navFromRooms(d.rooms));
       const c = this.crew;
       this.scope.add(() => c.dispose());
     }

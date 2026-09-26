@@ -143,3 +143,27 @@ export class InteriorBuilder {
     }
   }
 }
+
+/**
+ * Walk graph for crew, derived from room layout: a node at every room centre and at every
+ * doorway (windows excluded), rooms linked to their own doorways. Doorways shared by two
+ * rooms merge into one node, which joins the rooms.
+ */
+export function navFromRooms(rooms: RoomDef[]): { nodes: Record<string, THREE.Vector3>; edges: [string, string][] } {
+  const nodes: Record<string, THREE.Vector3> = {};
+  const edges: [string, string][] = [];
+  const key = (x: number, z: number) => `d:${Math.round(x * 2) / 2},${Math.round(z * 2) / 2}`;
+  for (const r of rooms) {
+    const c = `r:${r.id}`;
+    nodes[c] = new THREE.Vector3((r.x0 + r.x1) / 2, r.y, (r.z0 + r.z1) / 2);
+    for (const o of r.openings) {
+      if (o.window || (o.bottom ?? 0) > 0.3) continue;
+      const x = o.side === 'e' ? r.x1 : o.side === 'w' ? r.x0 : o.at;
+      const z = o.side === 'n' ? r.z0 : o.side === 's' ? r.z1 : o.at;
+      const k = key(x, z);
+      nodes[k] ??= new THREE.Vector3(x, r.y, z);
+      edges.push([c, k]);
+    }
+  }
+  return { nodes, edges };
+}

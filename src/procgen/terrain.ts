@@ -149,8 +149,9 @@ export class HeightField {
     return h11 + (h01 - h11) * (1 - tx) + (h10 - h11) * (1 - tz);
   }
 
-  normalAt(x: number, z: number, out = new THREE.Vector3()): THREE.Vector3 {
-    const e = this.spec.cell;
+  /** Surface normal; `eps` (m) sets the sampling footprint — match it to the mesh spacing. */
+  normalAt(x: number, z: number, out = new THREE.Vector3(), eps = this.spec.cell): THREE.Vector3 {
+    const e = Math.max(this.spec.cell, eps);
     const hl = this.heightAt(x - e, z), hr = this.heightAt(x + e, z);
     const hd = this.heightAt(x, z - e), hu = this.heightAt(x, z + e);
     return out.set(hl - hr, 2 * e, hd - hu).normalize();
@@ -269,7 +270,9 @@ export class ChunkedTerrain {
         const x = x0 + i * step;
         const z = z0 + j * step;
         const h = hf.heightAt(x, z);
-        hf.normalAt(x, z, n);
+        // Coarse LODs: sample normals over the vertex spacing, otherwise fine-scale
+        // detail shades coarse triangles into a sparkling, jagged mess at distance.
+        hf.normalAt(x, z, n, step);
         const color = this.opts.colorFn(x, z, h, 1 - n.y, hf.maskAt(x, z));
         put(x, h, z, n.x, n.y, n.z, color);
       }

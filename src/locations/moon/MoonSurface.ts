@@ -231,8 +231,8 @@ export class MoonSurface extends Location {
     };
     this.terrain = new ChunkedTerrain(hf, {
       chunkSize: 128,
-      lods: [64, 32, 16, 8],
-      lodDistances: [220, 480, 900],
+      lods: [64, 32, 16],
+      lodDistances: [260, 640],
       material: terrainMat,
       colorFn,
     });

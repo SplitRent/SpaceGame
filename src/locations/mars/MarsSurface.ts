@@ -176,7 +176,7 @@ export class MarsSurface extends Location {
       if (ds < 1) c.lerp(new THREE.Color(0.74, 0.55, 0.4), (1 - ds) * 0.5);
       return c.clone();
     };
-    this.terrain = new ChunkedTerrain(hf, { chunkSize: 128, lods: [64, 32, 16, 8], lodDistances: [220, 480, 900], material: terrainMat, colorFn });
+    this.terrain = new ChunkedTerrain(hf, { chunkSize: 128, lods: [64, 32, 16], lodDistances: [260, 640], material: terrainMat, colorFn });
     scene.add(this.terrain.group);
     this.scope.add(() => this.terrain.dispose());
     const farH = (x: number, z: number) => hf.evaluate(x, z).h;

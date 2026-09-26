@@ -45,6 +45,8 @@ export class SurfaceRegion extends Location {
   private dome: AtmoSkyDome | null = null;
   private csm!: CSM;
   private fill!: THREE.HemisphereLight;
+  /** Sunlight bounced off the terrain: lifts slopes facing away from a low sun. */
+  private bounce!: THREE.DirectionalLight;
   private fog: THREE.Fog | null = null;
   private skyBody: PlanetHandle | null = null;
   private ship: LanternModel | null = null;
@@ -272,7 +274,7 @@ export class SurfaceRegion extends Location {
     const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, map: d.palette.detail === false ? null : regolithDetailTexture() });
     this.scope.own(terrainMat);
     const colorFn = this.colorFn();
-    this.terrain = new ChunkedTerrain(hf, { chunkSize: 128, lods: [64, 32, 16, 8], lodDistances: [220, 480, 900], material: terrainMat, colorFn });
+    this.terrain = new ChunkedTerrain(hf, { chunkSize: 128, lods: [64, 32, 16], lodDistances: [260, 640], material: terrainMat, colorFn });
     scene.add(this.terrain.group);
     this.scope.add(() => this.terrain.dispose());
     scene.add(buildFarTerrain(hf, this.half, 8000, terrainMat, colorFn, d.terrain.curvatureR));
@@ -341,6 +343,9 @@ export class SurfaceRegion extends Location {
     });
     this.fill = new THREE.HemisphereLight(d.fill.sky, d.fill.ground, d.fill.intensity);
     scene.add(this.fill);
+    this.bounce = new THREE.DirectionalLight(new THREE.Color(d.sun.color).lerp(new THREE.Color(d.palette.base), 0.5), 0);
+    this.bounce.castShadow = false;
+    scene.add(this.bounce, this.bounce.target);
 
     // ---- The Lantern ----
     const pk = store.state.ship.parking;
@@ -639,7 +644,13 @@ export class SurfaceRegion extends Location {
     this.csm.lightDirection.copy(this.sunDir).negate();
     for (const l of this.csmLights()) l.intensity = d.sun.intensity * sunUp;
     this.csm.update();
-    this.fill.intensity = d.fill.intensity * (0.25 + 0.75 * day);
+    // A floor of ambient light so shaded ground never goes pure black, plus bounce light
+    // from the sunlit terrain (stronger where an atmosphere scatters it around).
+    this.fill.intensity = Math.max(0.22, d.fill.intensity * (0.25 + 0.75 * day));
+    const atmo = d.sky.kind === 'atmo';
+    this.bounce.intensity = d.sun.intensity * sunUp * (atmo ? 0.3 : 0.16);
+    this.bounce.position.set(-this.sunDir.x, Math.max(0.35, this.sunDir.y), -this.sunDir.z).normalize().multiplyScalar(100).add(cam.position);
+    this.bounce.target.position.copy(cam.position);
     this.updateWeather(dt, cam.position);
     // Blackglass sites keep the Cadence (compressed to ~20 s so it can be seen)
     const ph = (s.clock % 19.69) / 19.69;

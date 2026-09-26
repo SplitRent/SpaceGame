@@ -3,7 +3,7 @@ import { Location } from '../Location';
 import type { Game } from '../../Game';
 import { KitBuilder, stdMat } from '../../procgen/kit';
 import { floorTexture, wallTexture } from '../../procgen/textures';
-import { InteriorBuilder, type RoomDef } from '../lantern/interiorKit';
+import { InteriorBuilder, navFromRooms, type RoomDef } from '../lantern/interiorKit';
 import { CrewRuntime, type Spot } from '../../gameplay/crew';
 import { ScreenDisplay, ScreenUI } from '../../render/screen';
 import { ConsolePanel } from '../../interaction/ConsolePanel';
@@ -256,7 +256,7 @@ export class MelasStation extends Location {
       'melas.commons': { position: new THREE.Vector3(-1.5, 0, -6.2), yaw: 0 },
       'melas.lab': { position: new THREE.Vector3(-4, 0, -10.4), yaw: Math.PI },
     };
-    this.crew = new CrewRuntime(game, this, spots, (_x, _z, fb) => fb);
+    this.crew = new CrewRuntime(game, this, spots, (_x, _z, fb) => fb, navFromRooms(rooms));
     this.scope.add(() => this.crew.dispose());
     this.onStateChanged();
   }

@@ -347,4 +347,37 @@ export const DATABASE: DatabaseEntryDef[] = [
     id: "db.oldspire", title: "The Old Spire", category: "anomaly", tier: 1,
     text: "A Blackglass spire in rock that solidified about four billion years ago, during the Late Heavy Bombardment. Older than any rock on Earth. Older than life. It was waiting then, too.",
   },
+  /* ------------------------------ In transit ------------------------------ */
+  {
+    id: 'db.spe', title: 'Solar Particle Event', category: 'astronomy', tier: 1,
+    text: 'A burst of high-energy protons from a solar flare or coronal mass ejection. Between the planets there is no magnetic field or atmosphere to stop them; crews shelter behind water or propellant, the best shielding a ship carries.',
+  },
+  {
+    id: 'db.earthmoon', title: 'The Earth–Moon System', category: 'astronomy', tier: 1,
+    text: 'Seen from interplanetary space, Earth and the Moon look like a double planet: the Moon is over a quarter of Earth’s diameter, larger relative to its planet than almost any other moon.',
+  },
+  {
+    id: 'db.flyby', title: 'Rubble-Pile Asteroid 2031 QX', category: 'astronomy', tier: 1,
+    text: 'Many small asteroids are not solid rocks but loose aggregates of boulders and gravel held together by their own feeble gravity — as missions to Itokawa, Ryugu and Bennu found.',
+  },
+  {
+    id: 'db.aurora', title: 'Jupiter’s Magnetosphere', category: 'astronomy', tier: 1,
+    text: 'The largest structure in the Solar System after the Sun’s own heliosphere: if it glowed, it would look bigger than the full Moon in Earth’s sky. Its trapped particles make Jupiter’s radiation belts deadly, and light up auroras on anything conductive that flies through.',
+  },
+  {
+    id: 'db.rings', title: 'Saturn’s Rings', category: 'astronomy', tier: 1,
+    text: 'Hundreds of thousands of kilometres wide but typically only tens of metres thick, made of water-ice particles from dust grains to house-sized chunks. Cassini flew through the gap between the rings and the planet 22 times in 2017.',
+  },
+  {
+    id: 'db.newhorizons', title: 'New Horizons', category: 'history', tier: 1,
+    text: 'Launched 2006; flew past Pluto in 2015 and the Kuiper-belt object Arrokoth in 2019. It carries a small portion of the ashes of Clyde Tombaugh, who discovered Pluto in 1930.',
+  },
+  {
+    id: 'db.cadence', title: 'The Cadence', category: 'anomaly', tier: 1,
+    text: 'A signal repeating every 1,969 seconds, first detected by the Directorate three decades before the Lantern flew. Near its source it is not received so much as felt: the ship’s structure rings in sympathy.',
+  },
+  {
+    id: 'db.innersun', title: 'The Sun from the Inner System', category: 'astronomy', tier: 1,
+    text: 'Sunlight intensity falls with the square of distance: at Venus it is about twice Earth’s, at Mercury up to eleven times. Spacecraft like Parker Solar Probe survive behind carbon-composite heat shields.',
+  },
 ];

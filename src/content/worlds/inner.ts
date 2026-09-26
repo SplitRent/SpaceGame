@@ -62,7 +62,7 @@ export const MERCURY_SURFACE: SurfaceDef = {
   terrain: {
     baseAmp: 12, craterCount: 700, craterMaxR: 80, curvatureR: 2440000,
     features: [
-      { kind: 'rim', r0: 520, r1: 740, h: 280 },
+      { kind: 'rim', r0: 560, r1: 750, h: 170 },
       { kind: 'crater', x: -260, z: 220, r: 110, depth: 30 },
       { kind: 'mound', x: 160, z: -200, r: 60, h: 12 },
     ],

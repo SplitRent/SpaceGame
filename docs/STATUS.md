@@ -47,6 +47,6 @@ Dev shortcuts (dev server only): `?start=moon | ship | rich | powered | k9 | lau
 - No voice acting; text + subtitles + synthesised radio.
 - Kepler-9 drones are the only hostile; wildlife arrives with fictional worlds (Act 4).
 - Earth is orbit-only (a homecoming landing region is a possible future addition); Uranus and Neptune are visible but not destinations.
-- Transit has no interrupting encounters yet (the hook exists at the halfway beat).
-- Known rough edges to polish in a bug pass: lighting balance on some worlds at particular sun angles, far-LOD terrain jaggies on steep walls, NPC pathing in large interiors.
+- Transit events are authored beats (one per route at the halfway point), not yet interactive encounters.
+- Polished in the latest pass: bounce light and an ambient floor on every generic world (no pure-black shaded slopes), distance-matched terrain normals and a finer far LOD (no sparkling/jagged walls), walk graphs derived from room layouts for crew in every interior, and mid-transit events with database entries.
 - Gamepad support not yet implemented.

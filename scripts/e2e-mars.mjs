@@ -106,9 +106,13 @@ await g(() => {
 ok(await at('space.transit'), 'take the helm during transit → cruise view');
 await page.waitForTimeout(2500);
 await page.screenshot({ path: 'screenshots/e2e-mars-02-transit.png' });
-await g(() => { window.__game.store.state.ship.parking.elapsed = window.__game.store.state.ship.parking.duration - 1; });
+// Fast-forward like real time would: just before the midpoint (the halfway event fires as it crosses), then near the end.
+await g(() => { const p = window.__game.store.state.ship.parking; p.elapsed = p.duration * 0.5 - 0.2; });
+await waitFor(() => { const p = window.__game.store.state.ship.parking; return p.kind !== 'transit' || p.elapsed >= p.duration * 0.5; }, 20000);
+await g(() => { const p = window.__game.store.state.ship.parking; if (p.kind === 'transit') p.elapsed = p.duration - 1; });
 ok(await at('space.mars'), 'arrival: orbit insertion at Mars');
 ok(await waitFor(() => window.__game.store.state.universe.discovered['mars.orbit'] === true, 5000), 'Mars orbit discovered');
+ok(await g(() => !!window.__game.store.state.database['db.spe']), 'mid-transit event fired (solar particle event, database entry)');
 await page.waitForTimeout(3000);
 await page.screenshot({ path: 'screenshots/e2e-mars-03-orbit.png' });
 
