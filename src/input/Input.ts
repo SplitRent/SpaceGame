@@ -64,6 +64,8 @@ export class Input {
   invertY = false;
   /** Whether the current top context wants the pointer locked. */
   private wantsLock = false;
+  private lastLockChange = 0;
+  private motionAvg = 0;
   /** Set when we release the lock ourselves, so the async pointerlockchange isn't mistaken for Esc. */
   private expectUnlock = false;
   /** Time of the last lock/unlock/context operation we initiated (events can arrive out of order). */
@@ -99,6 +101,13 @@ export class Input {
     });
     s.listen(window, 'mousemove', (e) => {
       if (document.pointerLockElement === this.canvas) {
+        // Browsers occasionally deliver a single bogus, huge movement delta (notably right
+        // after locking, or when the OS cursor warps). Those read as a sudden camera "flick":
+        // drop the event just after a lock change, and any spike far above recent motion.
+        const mag = Math.hypot(e.movementX, e.movementY);
+        const sinceLock = performance.now() - this.lastLockChange;
+        if (sinceLock < 120 || (mag > 150 && mag > this.motionAvg * 10 + 60)) return;
+        this.motionAvg += (mag - this.motionAvg) * 0.1;
         this.mouseDX += e.movementX;
         this.mouseDY += e.movementY;
       } else {
@@ -115,6 +124,8 @@ export class Input {
       if (this.wantsLock && document.pointerLockElement !== this.canvas) this.requestLock();
     });
     s.listen(document, 'pointerlockchange', () => {
+      this.lastLockChange = performance.now();
+      this.motionAvg = 0;
       if (document.pointerLockElement === this.canvas) return;
       if (this.expectUnlock) {
         this.expectUnlock = false;
@@ -171,8 +182,22 @@ export class Input {
     if (document.pointerLockElement === this.canvas) return;
     this.lastLockOp = performance.now();
     try {
-      const p = this.canvas.requestPointerLock() as unknown as Promise<void> | undefined;
-      p?.catch?.(() => undefined);
+      // Raw (unaccelerated) mouse input where supported: steadier aim, fewer OS-induced jumps.
+      const req = this.canvas.requestPointerLock as unknown as (o?: { unadjustedMovement?: boolean }) => Promise<void> | undefined;
+      let p: Promise<void> | undefined;
+      try {
+        p = req.call(this.canvas, { unadjustedMovement: true });
+      } catch {
+        p = undefined;
+      }
+      p?.catch?.(() => {
+        // Not supported on this platform: fall back to a plain lock.
+        try {
+          (this.canvas.requestPointerLock() as unknown as Promise<void> | undefined)?.catch?.(() => undefined);
+        } catch {
+          /* needs a user gesture */
+        }
+      });
     } catch {
       /* ignore: requires user gesture */
     }

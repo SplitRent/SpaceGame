@@ -32,6 +32,7 @@ Other scripts:
 | Look | Mouse (click the game to capture the cursor) |
 | Cycle camera view (1st person / behind / front) | V |
 | Interact | E |
+| Step back from a console / panel | Space · E · right-click (Esc also works) |
 | Scan (hold) | F |
 | Multi-tool: mine, weld (hold) | Left mouse |
 | Headlamp | L |
@@ -41,7 +42,10 @@ Other scripts:
 | Ship flight | W/S throttle · A/D strafe · Space/C up/down · Q/E roll · mouse steer · Shift boost · Z flight assist · T target · G dock / land / tractor salvage · F scan target · X leave seat |
 
 Ship systems are always operated in first person: walk up to a console and press E, then
-click its physical buttons, switches and screens. **Interplanetary travel** is plotted on the
+click its physical buttons, switches and screens. The amber **waypoint** on screen always
+points at your current objective (or the next door / airlock / pilot seat on the way to it),
+and switches to the nearest O₂ refill when your suit runs low. Characters speak with their
+own synthesized voices (Settings → Audio → Character voices). **Interplanetary travel** is plotted on the
 holographic star map at the bridge holo table (reactor power, ship in orbit); take off from a
 surface with the pilot seat's flight deck key.
 

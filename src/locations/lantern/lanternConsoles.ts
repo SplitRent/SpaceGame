@@ -424,6 +424,29 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
   breachSpot('breach.corridor', 0, 2.5, 11);
   breachSpot('breach.lab', -7.3, 1.5, 7.2);
 
+  // Workshop maintenance cabinet: spare sealant cartridges, so the breaches can never
+  // soft-lock the air quest (e.g. an older save that used the crate's sealant elsewhere).
+  const breachesLeft = () => ['breach.corridor', 'breach.lab'].filter((b) => !step('life.hull', b)).length;
+  {
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.5), new THREE.MeshStandardMaterial({ color: '#b8862e', roughness: 0.6, metalness: 0.3, emissive: '#ffb347', emissiveIntensity: 0.12 }));
+    cab.position.set(3.9, 1.18, 3.4);
+    loc.frame.add(cab);
+    disposables.push(cab);
+    simple('sealant.cabinet', cab, () => 'Maintenance cabinet — spare hull sealant', () => {
+      const need = breachesLeft() * 2 - store.count('sealant');
+      if (need <= 0) {
+        pushNotification('You already carry enough sealant for the remaining breaches.', 'info');
+        return;
+      }
+      store.give('sealant', need);
+      store.notify(`Took ${need} × Hull Sealant from the maintenance cabinet.`, 'info');
+      game.audio.play('pickup', 0.6);
+    }, {
+      available: () => crashed() && breachesLeft() > 0,
+      detail: () => `${breachesLeft()} breach${breachesLeft() === 1 ? '' : 'es'} left · 2 sealant each`,
+    });
+  }
+
   /* ================================= BRIDGE ================================== */
 
   // --- Navigation station: star tracker install + calibration timing
@@ -759,9 +782,11 @@ export function buildLanternConsoles(game: Game, loc: LanternInterior): LanternC
   simple('emergency.crate', crate, () => 'Open emergency supply crate', () => {
     store.grant('crate.emergency', [
       { setEntity: { location: loc.id, entity: 'emergency.crate', key: 'opened', value: true } },
+      { setFlag: 'crate.emergency' },
       { give: 'fuelcell', qty: 1 },
       { give: 'scrubber', qty: 2 },
-      { give: 'sealant', qty: 2 },
+      { give: 'sealant', qty: 4 },
+      { give: 'scrap', qty: 2 },
       { give: 'medpatch', qty: 2 },
       { give: 'o2canister', qty: 1 },
     ]);

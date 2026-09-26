@@ -738,6 +738,27 @@ export class SurfaceRegion extends Location {
     return this.mapUrl;
   }
 
+  override waypointPos(key: string, from: THREE.Vector3): THREE.Vector3 | null {
+    const [kind, arg] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+    if (kind === 'poi') {
+      const p = this.def.pois.find((q) => q.id === arg);
+      return p ? this.ground(p.x, p.z).add(new THREE.Vector3(0, 1.5, 0)) : null;
+    }
+    if (kind === 'zone') {
+      const z = this.zones.find((q) => q.id === arg);
+      return z ? this.ground(z.x, z.z).add(new THREE.Vector3(0, 1.5, 0)) : null;
+    }
+    if (kind === 'pos') {
+      const [x, z] = arg.split(',').map(Number);
+      return this.ground(x, z).add(new THREE.Vector3(0, 1.5, 0));
+    }
+    return super.waypointPos(key, from);
+  }
+
+  override oxygenWaypoint(): { key: string; label: string } | null {
+    return { key: 'it:enter.airlock', label: 'O₂ refill — the Lantern' };
+  }
+
   mapMarkers(): { x: number; y: number; label: string; color: string }[] {
     const s = this.game.store.state;
     const out: { x: number; y: number; label: string; color: string }[] = [];

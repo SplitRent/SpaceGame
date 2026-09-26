@@ -74,6 +74,10 @@ export class CinematicPlayer {
       return;
     }
     s.onStart?.();
+    if (s.subtitle) {
+      // Hold the shot long enough for the line to be spoken.
+      s.duration = Math.max(s.duration, this.game.voices.duration(s.subtitle.speaker, s.subtitle.text) + 0.2);
+    }
     if (s.subtitle !== undefined) ui.subtitle.value = s.subtitle;
     if (s.shake) this.game.cam.addShake(s.shake);
   }
@@ -106,6 +110,7 @@ export class CinematicPlayer {
 
   skip(): void {
     if (this.ended) return;
+    this.game.voices.stop();
     // Run remaining onStart hooks that only set up visuals is unnecessary; state lives in onEnd.
     void this.finish();
   }

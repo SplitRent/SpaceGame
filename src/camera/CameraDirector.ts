@@ -111,7 +111,8 @@ export class CameraDirector {
         // Fade the model when the camera is jammed against it
         player.model.root.visible = dist > 0.6;
       }
-      if (view === 'first') player.model.root.visible = true;
+      // First person: never draw our own body (looking down would clip through it).
+      if (view === 'first') player.model.root.visible = false;
     }
 
     if (!this.initialized) {

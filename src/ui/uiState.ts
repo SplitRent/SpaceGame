@@ -118,6 +118,10 @@ export const ui = {
   /** Active ending sequence id (see content/endings.ts). */
   ending: signal<string | null>(null),
   /** Screen-space flight markers (0..1 coords). */
+  /** On-foot objective waypoint (screen coords 0..1). */
+  waypoint: signal<{ x: number; y: number; label: string; dist: string; edge: boolean; angle: number; kind: 'objective' | 'route' | 'oxygen'; vert: 'up' | 'down' | null; near: boolean } | null>(null),
+  /** Next corridor node toward the waypoint (interiors). */
+  waypointCrumb: signal<{ x: number; y: number } | null>(null),
   markers: signal<{ x: number; y: number; label: string; dist: string; selected: boolean; behind: boolean }[]>([]),
 };
 

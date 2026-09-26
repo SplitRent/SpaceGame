@@ -370,6 +370,10 @@ export class Kepler9 extends Location {
     return pos.z < -72 ? -120 : -40;
   }
 
+  override oxygenWaypoint(): { key: string; label: string } | null {
+    return { key: 'it:k9.exit', label: 'O₂ — back to the surface' };
+  }
+
   override onEnter(): void {
     void this.builder;
   }

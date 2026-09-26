@@ -22,6 +22,7 @@ export class SuitSystem {
   private damageAccum = 0;
   private warnO2 = false;
   private warnPower = false;
+  private critO2 = false;
   readout: SuitReadout = { pressurized: true, temperature: 20, hazard: null, oxygenRate: 0 };
   onDamage: ((amount: number, cause: string) => void) | null = null;
 
@@ -89,9 +90,12 @@ export class SuitSystem {
     }
 
     // Warnings (edge-triggered)
-    const lowO2 = p.oxygen / p.oxygenMax < 0.25;
-    if (lowO2 && !this.warnO2) this.store.notify('Suit oxygen below 25%', 'warn');
+    const lowO2 = !pressurized && p.oxygen / p.oxygenMax < 0.25;
+    if (lowO2 && !this.warnO2) this.store.notify('Suit oxygen below 25% — follow the O₂ marker to a refill (suit locker, the ship, or any pressurized room)', 'warn');
     this.warnO2 = lowO2;
+    const critO2 = !pressurized && p.oxygen / p.oxygenMax < 0.1;
+    if (critO2 && !this.critO2) this.store.notify('OXYGEN CRITICAL', 'warn');
+    this.critO2 = critO2;
     const lowPw = p.suitPower / p.suitPowerMax < 0.2;
     if (lowPw && !this.warnPower) this.store.notify('Suit power low', 'warn');
     this.warnPower = lowPw;

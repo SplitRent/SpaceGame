@@ -188,19 +188,24 @@ export class Player {
     this.grounded = this.controller.computedGrounded();
     if (this.grounded) {
       if (!wasGrounded && this.airTime > 0.25) this.landingImpact = Math.max(this.landingImpact, -this.velocity.y);
-      if (this.velocity.y < 0) this.velocity.y = -0.5;
+      // Ground snapping keeps us down; a standing downward push would drag us back down slopes.
+      if (this.velocity.y < 0) this.velocity.y = 0;
       this.airTime = 0;
     } else {
       this.airTime += dt;
       // Hit ceiling
       if (mv.y < desired.y * 0.5 && desired.y > 0) this.velocity.y = 0;
     }
-    // Horizontal velocity correction when blocked by walls
+    // Blocked by a wall: carry on with the slide the controller found. Slopes and stairs
+    // also shorten the horizontal move a little (part of it becomes climb) — that must
+    // not bleed off speed frame after frame, so only react to a real obstruction.
     if (dt > 0) {
-      const actualVX = mv.x / dt;
-      const actualVZ = mv.z / dt;
-      if (Math.abs(actualVX) < Math.abs(this.velocity.x)) this.velocity.x = actualVX;
-      if (Math.abs(actualVZ) < Math.abs(this.velocity.z)) this.velocity.z = actualVZ;
+      const want = Math.hypot(desired.x, desired.z);
+      const got = Math.hypot(mv.x, mv.z);
+      if (want > 1e-5 && got < want * 0.6) {
+        this.velocity.x = mv.x / dt;
+        this.velocity.z = mv.z / dt;
+      }
     }
 
     this.position.set(next.x, next.y - HALF - RADIUS, next.z);
